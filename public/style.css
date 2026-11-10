@@ -26,3 +26,40 @@ dialog{color:var(--paper);background:var(--surface);border:var(--edge);box-shado
 
 .visitor-badge{position:absolute;top:66px;left:max(12px,env(safe-area-inset-left));z-index:4;display:flex;align-items:center;gap:7px;padding:6px 9px;background:#1d2433ed;border:1px solid #eeeade75;box-shadow:2px 2px 0 #16202a30;font-family:var(--display);font-size:15px;max-width:calc(100% - 24px);color:var(--paper)}.visitor-badge svg{width:17px;height:17px;fill:var(--accent);stroke:none;flex-shrink:0}.visitor-badge strong{font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}.visitor-badge button{background:transparent;border:1px solid var(--line);font-size:17px;line-height:1;padding:1px 4px}.visitor-badge[data-state="error"]{font-size:12px;color:var(--muted)}
 @media(max-width:600px){.visitor-badge{top:59px;left:max(8px,env(safe-area-inset-left));font-size:14px;padding:5px 8px}}
+
+/* --- live atmosphere --- */
+#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#fx[hidden]{display:none}
+body.fx-on #theme-toggle{display:none}
+.setting-toggle small{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-weight:400}
+.atmo-button{position:absolute;top:106px;left:max(12px,env(safe-area-inset-left));z-index:4;display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;background:#1d2433ed;border:1px solid #eeeade75;box-shadow:2px 2px 0 #16202a30;color:var(--paper);font-family:var(--display);font-size:15px;border-radius:0;cursor:pointer;max-width:calc(100% - 24px);white-space:nowrap}
+.atmo-button[hidden]{display:none}
+.atmo-button:hover,.atmo-button[aria-expanded=true]{border-color:var(--accent)}
+.atmo-button:focus-visible,.atmo-options button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.atmo-icon{color:var(--accent);font-family:'Noto Sans Symbols 2','Segoe UI Symbol','Apple Symbols',sans-serif;font-variant-emoji:text;font-size:16px;line-height:1;width:17px;text-align:center}
+.atmo-season{color:var(--accent);padding-left:8px;border-left:1px solid #eeeade40}
+.atmo-caret{color:var(--muted);font-size:11px;transition:transform .15s}
+.atmo-button[aria-expanded=true] .atmo-caret{transform:rotate(180deg)}
+.atmo-panel{position:absolute;top:148px;left:max(12px,env(safe-area-inset-left));z-index:6;width:min(372px,calc(100% - 24px));padding:16px 16px 14px;background:#1d2433f5;border:var(--edge);box-shadow:4px 4px 0 #16202a55;color:var(--paper)}
+.atmo-panel[hidden]{display:none}
+.atmo-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.atmo-head .eyebrow{display:block;font-size:10px;letter-spacing:.12em;color:var(--muted)}
+.atmo-head .eyebrow b{margin-left:6px;padding:1px 5px;background:var(--accent);color:var(--surface);font-weight:600;letter-spacing:.06em}
+.atmo-panel.manual .eyebrow b{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.atmo-head strong{display:block;margin-top:5px;font-family:var(--display);font-size:21px;font-weight:500;font-variant-numeric:tabular-nums}
+.atmo-head .close-button{position:static;flex-shrink:0}
+.atmo-row{display:grid;gap:6px;margin-top:11px}
+.atmo-row-title{font-size:10px;letter-spacing:.14em;color:var(--muted)}
+.atmo-options{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line)}
+.atmo-options button{min-width:0;height:36px;padding:0 2px;background:transparent;border:0;border-left:1px solid var(--line);color:var(--paper);font-family:var(--display);font-size:14px;border-radius:0;cursor:pointer}
+.atmo-options button:first-child{border-left:0;color:var(--muted)}
+.atmo-options button:hover{background:#eeeade14}
+.atmo-options button[aria-pressed=true]{background:var(--accent);color:var(--surface)}
+.atmo-panel .wide-button{margin-top:14px;width:100%}
+.atmo-note{margin:11px 0 0;font-size:11.5px;line-height:1.45;color:var(--muted)}
+@media(max-width:600px){
+  .atmo-button{top:96px;left:max(8px,env(safe-area-inset-left));height:32px;font-size:14px}
+  .atmo-panel{top:134px;left:max(8px,env(safe-area-inset-left));width:calc(100% - 16px);padding:14px 12px 12px}
+  .atmo-options button{font-size:13px;height:38px}
+}
+@media(prefers-reduced-motion:reduce){.atmo-caret{transition:none}}

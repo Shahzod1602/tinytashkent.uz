@@ -3,6 +3,7 @@ import {TileMap} from './tiles.js?v=14';
 import {MapNavigation} from './navigation.js?v=6';
 import {normalizeSearch,searchPlaces} from './search.js?v=1';
 import {readPreferences,savePreferences,parseMapLocation} from './state.js?v=1';
+import {initAtmosphere} from './atmosphere.js?v=1';
 const $=s=>document.querySelector(s);
 const places=[
   {id:'amir',name:'Amir Temur xiyoboni',category:'Xiyobon',icon:'✳',coords:[69.2797551,41.3111759],desc:'Toshkent markazidagi yashil orol. Amir Temur haykali atrofidan shahar ko‘chalari turli yo‘nalishlarga yoyiladi.',keywords:'skver square amir temur park'},
@@ -39,6 +40,9 @@ const prefs=readPreferences();night=prefs.night;labels=prefs.labels;showMetro=pr
 document.body.classList.toggle('night',night);$('#markers').classList.toggle('labels-hidden',!labels);
 $('#labels-toggle').setAttribute('aria-pressed',String(labels));$('#metro-toggle').setAttribute('aria-pressed',String(showMetro));$('#theme-toggle').setAttribute('aria-pressed',String(night));
 const rememberPreferences=()=>savePreferences({labels,metro:showMetro,night});
+// Live atmosphere (time of day, weather, seasons). Null when WebGL is unavailable; the classic evening toggle remains.
+const atmo=initAtmosphere({source:canvas,camera,viewport:()=>({width:w,height:h}),requestDraw,toast,onActiveChange:on=>{if(!on)document.body.classList.toggle('night',night);}});
+const dimmed=()=>night&&!atmo?.active;
 for(const p of places){
   p.point=project(p.coords);
   const b=document.createElement('button');b.className='map-marker';b.dataset.id=p.id;b.setAttribute('aria-label',p.name);b.innerHTML=`<span class="marker-label">${p.name}</span><span class="marker-pin"></span>`;b.addEventListener('click',()=>selectPlace(p.id));$('#markers').append(b);markerNodes.set(p.id,b);
@@ -59,14 +63,15 @@ function draw(time){
   const nextFrame=navigation.step(time),moving=navigation.moving||!!animation;
   const density=Math.min(devicePixelRatio||1,moving?1.5:2);
   if(canvas.width!==Math.round(w*density)||canvas.height!==Math.round(h*density)){canvas.width=Math.round(w*density);canvas.height=Math.round(h*density);}dpr=density;
-  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=night?'#293d3c':'#819461';ctx.fillRect(0,0,w,h);
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=dimmed()?'#293d3c':'#819461';ctx.fillRect(0,0,w,h);
   ctx.imageSmoothingEnabled=moving||camera.z<1.5;ctx.imageSmoothingQuality='low';
   tileMap.paint(ctx,camera,w,h,true,{moving});
   if(camera.z<.2&&cityPath){
     ctx.save();ctx.translate(w/2-camera.x*camera.z,h/2-camera.y*camera.z);ctx.scale(camera.z,camera.z);ctx.strokeStyle='#586e5499';ctx.lineWidth=1.2/camera.z;ctx.setLineDash([4/camera.z,4/camera.z]);ctx.stroke(cityPath);
     ctx.restore();
   }
-  if(night){ctx.globalCompositeOperation='multiply';ctx.fillStyle='#596b8f';ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation='source-over';ctx.fillStyle='#152c4026';ctx.fillRect(0,0,w,h);}
+  if(dimmed()){ctx.globalCompositeOperation='multiply';ctx.fillStyle='#596b8f';ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation='source-over';ctx.fillStyle='#152c4026';ctx.fillRect(0,0,w,h);}
+  atmo?.mapDrawn(time);
   const occupied=[],priority=p=>p.id===selected?-1:['district-chilonzor','district-yunusobod','district-sergeli'].indexOf(p.id);
   if(!markerOrder.length||markerSelection!==selected){markerSelection=selected;markerOrder=[...districtPlaces,...places,...metroPlaces,...(catalogIndex.has(selected)?[catalogIndex.get(selected)]:[])].sort((a,b)=>(priority(a)<0&&a.id!==selected?10:priority(a))-(priority(b)<0&&b.id!==selected?10:priority(b)));}
   for(const p of markerOrder){
@@ -117,7 +122,7 @@ function animateTo(x,y,z){
 function changeZoom(factor,sx=w/2,sy=h/2){
   cancelAnimationFrame(animation);animation=0;navigation.zoom(factor,{x:sx,y:sy});
 }
-function savePosition(){if(!ready)return;const [lon,lat]=unproject([camera.x,camera.y]);const hash=`#map=${lat.toFixed(5)},${lon.toFixed(5)},${camera.z.toFixed(4)}${selected?`&place=${selected}`:''}`;history.replaceState(null,'',hash);}
+function savePosition(){if(!ready)return;const [lon,lat]=unproject([camera.x,camera.y]);const hash=`#map=${lat.toFixed(5)},${lon.toFixed(5)},${camera.z.toFixed(4)}${selected?`&place=${selected}`:''}${atmo?.hashParam()??''}`;history.replaceState(null,'',hash);}
 function scheduleSave(){clearTimeout(scheduleSave.timer);scheduleSave.timer=setTimeout(savePosition,250);}
 function selectPlace(id,move=true){
   const p=findPlace(id);if(!p)return;
@@ -220,7 +225,7 @@ $('#zoom-in').onclick=()=>changeZoom(1.28);$('#zoom-out').onclick=()=>changeZoom
 $('#fit-button').onclick=()=>{$('#settings-dialog').close();closePlace();animateTo(WIDTH/2,HEIGHT/2,Math.min(w/WIDTH,h/HEIGHT)*.86);};
 $('#labels-toggle').onclick=()=>{labels=!labels;$('#markers').classList.toggle('labels-hidden',!labels);$('#labels-toggle').setAttribute('aria-pressed',String(labels));rememberPreferences();};
 $('#metro-toggle').onclick=()=>{showMetro=!showMetro;$('#metro-toggle').setAttribute('aria-pressed',String(showMetro));rememberPreferences();requestDraw();};
-$('#theme-toggle').onclick=()=>{night=!night;document.body.classList.toggle('night',night);$('#theme-toggle').setAttribute('aria-pressed',String(night));rememberPreferences();requestDraw();toast(night?'Toshkent oqshomi':'Quyoshli Toshkent');};
+$('#theme-toggle').onclick=()=>{night=!night;if(!atmo?.active)document.body.classList.toggle('night',night);$('#theme-toggle').setAttribute('aria-pressed',String(night));rememberPreferences();requestDraw();toast(night?'Toshkent oqshomi':'Quyoshli Toshkent');};
 $('#search').addEventListener('input',()=>showResults());$('#search').addEventListener('focus',()=>showResults());
 $('#search').addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeResults();$('#search').blur();return;}
@@ -246,7 +251,8 @@ $('#download-map').onclick=async()=>{
   let release=()=>{};
   try{release=await tileMap.ensure(view,1600,1000);}catch{toast('Ayrim detallar yuklanmadi. Rasm mavjud sifatda saqlanadi.');}finally{button.disabled=false;}
   c.fillStyle='#819461';c.fillRect(0,0,1600,1000);try{tileMap.paint(c,view,1600,1000,false);}finally{release();}
-  if(night){c.globalCompositeOperation='multiply';c.fillStyle='#596b8f';c.fillRect(0,0,1600,1000);c.globalCompositeOperation='source-over';}
+  if(dimmed()){c.globalCompositeOperation='multiply';c.fillStyle='#596b8f';c.fillRect(0,0,1600,1000);c.globalCompositeOperation='source-over';}
+  const lit=atmo?.active?atmo.still(out,view,1600,1000):null;if(lit)c.drawImage(lit,0,0);
   c.fillStyle='#1d2433';c.fillRect(0,905,1600,95);c.fillStyle='#eeeade';c.font='600 30px "Pixelify Sans", monospace';c.fillText('tiny tashkent',42,958);c.font='15px "DM Sans", sans-serif';c.fillStyle='#bfc6c8';c.fillText('Toshkent, kaftingizda.',290,958);c.font='12px sans-serif';c.textAlign='right';c.fillText('© OpenStreetMap contributors · Binolar badiiy talqinda',1558,958);
   out.toBlob(blob=>{if(!blob){toast('Rasmni tayyorlab bo‘lmadi. Qayta urinib ko‘ring.');return;}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='tiny-tashkent.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);toast('Rasm yuklab olishga tayyorlandi');},'image/png');
 };

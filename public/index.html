@@ -7,13 +7,14 @@
   <meta name="description" content="Toshkent, kaftingizda. Butun Toshkentning izometrik xaritasi: Chilonzor, Yunusobod, Sergeli, Yangihayot, Bektemir va barcha tumanlar.">
   <title>tiny tashkent — Toshkent, kaftingizda</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=14">
-  <script type="module" src="./app.js?v=15"></script>
+  <link rel="stylesheet" href="./style.css?v=15">
+  <script type="module" src="./app.js?v=16"></script>
   <script type="module" src="./visitors.js?v=1"></script>
 </head>
 <body>
   <main id="app">
     <canvas id="map" tabindex="0" aria-label="Toshkentning izometrik xaritasi. Surish uchun strelka tugmalari, yaqinlashtirish uchun plus, uzoqlashtirish uchun minus."></canvas>
+    <canvas id="fx" aria-hidden="true"></canvas>
     <div class="vignette" aria-hidden="true"></div>
     <div id="markers" aria-label="Xaritadagi diqqatga sazovor joylar"></div>
     <header class="creator-credit" aria-label="Sayt muallifi">
@@ -29,6 +30,14 @@
       <span id="visitor-status" role="status" aria-live="polite"><strong id="visitor-count">…</strong> tashrifchi</span>
       <button id="visitor-retry" hidden type="button" aria-label="Tashrifchilar hisobini qayta yuklash">↻</button>
     </aside>
+
+    <button id="atmo-button" class="atmo-button" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="atmo-panel" title="Vaqt, ob-havo va fasl" hidden><span class="atmo-icon" aria-hidden="true">☀</span><span class="atmo-text">Kun · Quyosh</span><span class="atmo-season">Kuz</span><span class="atmo-caret" aria-hidden="true">▾</span></button>
+    <section id="atmo-panel" class="atmo-panel" role="dialog" aria-label="Vaqt, ob-havo va fasl" hidden>
+      <div class="atmo-head"><div><span class="eyebrow">HOZIR TOSHKENTDA <b id="atmo-mode">JONLI</b></span><strong id="atmo-live">—</strong></div><button id="atmo-close" class="close-button" type="button" aria-label="Yopish">×</button></div>
+      <div id="atmo-rows"></div>
+      <button id="atmo-reset" class="wide-button" type="button" hidden>Hozirgi Toshkentga qaytish <span>↺</span></button>
+      <p class="atmo-note">“Avto” — Toshkentdagi haqiqiy soat, ob-havo va faslga ergashadi.</p>
+    </section>
 
     <header class="brand panel">
       <a href="./" class="wordmark" aria-label="tiny tashkent bosh sahifasi"><span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i></span>tiny<span>tashkent</span><b>®</b></a>
@@ -71,6 +80,7 @@
         <button id="labels-toggle" class="setting-toggle" aria-pressed="true"><span>Joy nomlari</span><span class="toggle-track" aria-hidden="true"></span></button>
         <button id="metro-toggle" class="setting-toggle" aria-pressed="false"><span>Metro stansiyalari</span><span class="toggle-track" aria-hidden="true"></span></button>
         <button id="theme-toggle" class="setting-toggle" aria-pressed="false"><span>Oqshom ko‘rinishi</span><span class="toggle-track" aria-hidden="true"></span></button>
+        <button id="fx-toggle" class="setting-toggle" aria-pressed="true"><span>Jonli atmosfera <small>vaqt · ob-havo · fasl</small></span><span class="toggle-track" aria-hidden="true"></span></button>
       </div>
       <div class="settings-zoom"><span>Masshtab</span><div class="zoom-controls"><button id="zoom-out" aria-label="Uzoqlashtirish">−</button><output id="zoom-value" aria-label="Masshtab">100%</output><button id="zoom-in" aria-label="Yaqinlashtirish">+</button></div></div>
       <div class="settings-navigation"><button id="home-button" class="wide-button">Markazga qaytish <span>↗</span></button><button id="fit-button" class="wide-button">Butun xarita <span>↗</span></button></div>
