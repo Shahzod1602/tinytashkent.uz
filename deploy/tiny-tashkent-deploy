@@ -1,0 +1,49 @@
+#!/bin/bash
+# Server-side deploy for tinytashkent.uz. Installed at /usr/local/bin and bound to
+# the CI key as an SSH forced command, so that key can do nothing else.
+# The commit to deploy arrives as the SSH command string (a full 40-char SHA).
+set -euo pipefail
+ROOT=/var/www/tiny-tashkent
+REPO=$ROOT/repo
+SHARED=$ROOT/shared
+SHA="${SSH_ORIGINAL_COMMAND:-${1:-}}"
+[[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "usage: a 40-character commit SHA" >&2; exit 2; }
+
+exec 9>"$ROOT/.deploy.lock"
+flock -w 120 9 || { echo "another deploy is running" >&2; exit 1; }
+
+git -C "$REPO" fetch --quiet origin main
+git -C "$REPO" cat-file -e "$SHA^{commit}" || { echo "commit $SHA is not on main" >&2; exit 1; }
+git -C "$REPO" merge-base --is-ancestor "$SHA" origin/main || { echo "commit $SHA is not on main" >&2; exit 1; }
+git -C "$REPO" reset --quiet --hard "$SHA"
+
+RELEASE="$ROOT/releases/$(date -u +%Y%m%d-%H%M%S)-${SHA:0:7}"
+mkdir -p "$RELEASE"
+rsync -a "$REPO/public" "$REPO/server" "$RELEASE/"
+echo "$SHA" > "$RELEASE/REVISION"
+
+# Tiles are too heavy for git; they live in shared/ and are linked into each release.
+TILES=$(grep -o '"baseUrl":"[^"]*"' "$RELEASE/public/data/map.json" | sed 's/.*\///; s/"//')
+[[ "$TILES" =~ ^tiles-v[0-9]+$ ]] || { echo "unexpected tile folder in map.json: $TILES" >&2; rm -rf "$RELEASE"; exit 1; }
+[[ -f "$SHARED/$TILES/overview.webp" ]] || { echo "$SHARED/$TILES is missing: upload the tiles first (deploy/upload-tiles.sh)" >&2; rm -rf "$RELEASE"; exit 1; }
+for dir in "$SHARED"/tiles-v*; do ln -sfn "$dir" "$RELEASE/public/data/$(basename "$dir")"; done
+chmod -R a+rX "$RELEASE"
+
+PREVIOUS=$(readlink -f "$ROOT/current")
+ln -sfn "$RELEASE" "$ROOT/current.next" && mv -T "$ROOT/current.next" "$ROOT/current"
+systemctl restart tiny-tashkent.service
+
+check() { curl -fsS -o /dev/null --max-time 10 --resolve tinytashkent.uz:443:127.0.0.1 "https://tinytashkent.uz$1"; }
+sleep 2
+if ! { check / && check /app.js && check /data/map.json && check "/data/$TILES/overview.webp" && check /healthz; }; then
+  echo "health check failed: rolling back to $PREVIOUS" >&2
+  ln -sfn "$PREVIOUS" "$ROOT/current.next" && mv -T "$ROOT/current.next" "$ROOT/current"
+  systemctl restart tiny-tashkent.service
+  exit 1
+fi
+
+# Keep the five newest releases (and whatever is live).
+ls -1dt "$ROOT"/releases/*/ | tail -n +6 | while read -r old; do
+  [[ "$(readlink -f "$old")" == "$(readlink -f "$ROOT/current")" ]] || rm -rf "$old"
+done
+echo "deployed ${SHA:0:7} -> $RELEASE"

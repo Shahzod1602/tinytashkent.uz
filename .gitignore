@@ -3,3 +3,4 @@ public/data/tiles-v11/
 node_modules/
 .DS_Store
 *.sqlite*
+__pycache__/

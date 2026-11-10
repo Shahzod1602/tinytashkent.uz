@@ -1,0 +1,53 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax-check scripts
+        run: |
+          for file in public/*.js; do node --input-type=module --check < "$file" || { echo "::error file=$file::syntax error"; exit 1; }; done
+          for file in server/*.mjs; do node --check "$file"; done
+          python3 -m py_compile tools/bake.py tools/cdp_check.py
+          bash -n deploy/tiny-tashkent-deploy deploy/upload-tiles.sh
+      - name: Validate data files
+        run: |
+          for file in public/data/*.json; do python3 -m json.tool "$file" > /dev/null || { echo "::error file=$file::invalid JSON"; exit 1; }; done
+          gzip -t public/data/tashkent.osm.geojson.gz
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy this commit
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # The key is bound to the deploy script on the server; the command string is the commit to deploy.
+          ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 "root@$DEPLOY_HOST" "$GITHUB_SHA"
+      - name: Smoke test
+        run: |
+          curl -fsS -o /dev/null https://tinytashkent.uz/
+          curl -fsS https://tinytashkent.uz/data/map.json | python3 -c "import json,sys; m=json.load(sys.stdin); print('live map edition', m['version'])"
