@@ -37,7 +37,7 @@ export function drawLandmarkFacade(c,{identity,len,h,dx,floors,pal,props}){
     }
     cornice(c,len,h,stone);return true;
   }
-  if(['hilton','nest','mall','humo'].includes(identity)){
+  if(['hilton','nest','humo'].includes(identity)){
     glazing(c,len,h,identity==='hilton'?'#354e5d':identity==='nest'?'#496d7a':'#4b6b72');
     if(identity==='humo'){
       c.fillStyle='#b4c1bc';c.fillRect(0,-h,len,h*.55);

@@ -6,6 +6,9 @@ import {drawLandmarkFacade,drawNeighbourhoodDetails} from './facades.js';
 const ORIGIN = [69.276, 41.315];
 const COS = Math.cos(-Math.PI / 9), SIN = Math.sin(-Math.PI / 9);
 const METER = .98, TILT = .62, MARGIN = 220;
+// Edition 11 is baked as pixel art (one art pixel per world pixel), so facade
+// details are drawn at whole-pixel sizes instead of hairlines that would alias.
+const PIXEL = true;
 export const MAP_BOUNDS = [69.115, 41.150, 69.535, 41.430];
 const [WEST,SOUTH,EAST,NORTH] = MAP_BOUNDS;
 function raw([lon, lat]) {
@@ -148,7 +151,7 @@ function facade(c,a,b,h,seed,pal,props,hotel=false){
   if(glass){
     const reflection=c.createLinearGradient(0,-h,len,0);reflection.addColorStop(0,blend(pal.wall,'#9fbdba',.3));reflection.addColorStop(.46,blend(pal.wall,'#244451',.48));reflection.addColorStop(1,blend(pal.wall,'#5d8791',.3));c.fillStyle=reflection;c.fillRect(0,-h,len,h);
     c.strokeStyle='#d0e2d138';c.lineWidth=1.1;for(let x=-h;x<len+h;x+=24){c.beginPath();c.moveTo(x,-h);c.lineTo(x+h*.4,0);c.stroke();}
-  }else if(h>8){
+  }else if(h>8&&!PIXEL){
     c.fillStyle=blend(pal.wall,'#526561',.12);for(let x=step*2.9;x<len;x+=step*3)c.fillRect(x,-h,.35,h);
     c.fillStyle=blend(pal.wall,'#f5e9d4',.13);c.fillRect(len*.08,-h,Math.max(.6,len*.015),h);
   }
@@ -156,13 +159,19 @@ function facade(c,a,b,h,seed,pal,props,hotel=false){
   c.fillStyle='#344a4430';c.fillRect(0,-2,len,2);
   for(let f=0;f<floors;f++){
     const top=-h+f*fh+Math.min(1.2,fh*.23),wh=Math.max(1.4,fh*.52);
-    if(f>0&&h>10){c.fillStyle=blend(pal.wall,'#405a5a',.20);c.fillRect(0,-h+f*fh-.3,len,.35);}
+    if(f>0&&h>10&&!PIXEL){c.fillStyle=blend(pal.wall,'#405a5a',.20);c.fillRect(0,-h+f*fh-.3,len,.35);}
     for(let j=0;j<count;j++){
       const x=(j+.5)*step,ww=Math.min(step*(glass?.88:.52),glass?4.5:2.7),variant=(seed+j*29+f*17)%23;
       if(hotel){
         c.fillStyle='#48616a';c.fillRect(x-step*.38,top,step*.76,wh);
         c.strokeStyle='#f5e7cc';c.lineWidth=.65;c.strokeRect(x-step*.46,top-.35,step*.92,wh+.65);
         c.beginPath();c.moveTo(x,top-.35);c.lineTo(x,top+wh+.3);c.moveTo(x-step*.46,top+wh*.48);c.lineTo(x+step*.46,top+wh*.48);c.stroke();
+      }else if(PIXEL){
+        // One clean pane per bay and storey: a regular grid reads as windows,
+        // where sub-pixel frames and glints turn into speckle.
+        const pane=glass?Math.max(2,step-1):step>=5?3:2,tall=Math.max(2,Math.min(Math.round(fh-2),5)),y=-h+f*fh+1;
+        c.fillStyle=variant<2?'#c2bfa8':glass?blend(pal.wall,'#1b4659',.5):variant===3?'#5d7377':'#2c4753';c.fillRect(x-pane/2,y,pane,Math.min(tall,fh-1));
+        if(balcony&&f<floors-1&&j%3!==2){c.fillStyle=blend(pal.wall,'#2e4b48',.32);c.fillRect(x-pane/2-1,y+Math.min(tall,fh-1),pane+2,1);}
       }else{
         c.fillStyle=blend(pal.wall,glass?'#c1d1c8':'#f6e7ce',glass?.12:.38);c.fillRect(x-ww/2-.35,top-.3,ww+.7,wh+.6);
         c.fillStyle=variant<2?'#b5b39b':glass?blend(pal.wall,'#1b4659',.46):variant===3?'#6f7e78':'#334d56';c.fillRect(x-ww/2,top,ww,wh);
@@ -186,7 +195,7 @@ function facade(c,a,b,h,seed,pal,props,hotel=false){
       c.fillStyle='#4b574850';c.fillRect(len*.5-4,-3.1,8.1,.6);
     }
   }
-  c.fillStyle='#e5dec6a0';c.fillRect(0,-h,len,.5);
+  c.fillStyle='#e5dec6a0';c.fillRect(0,-h,len,PIXEL?1:.5);
   c.restore();
 }
 function roofBox(c,x,y,w,d,h,color){

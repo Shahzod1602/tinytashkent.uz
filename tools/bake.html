@@ -6,6 +6,56 @@ const params=new URLSearchParams(location.search),version=params.get('v')||'0';
 const {renderCity,project,WIDTH,HEIGHT}=await import('/public/renderer.js?bake='+version);
 const arch=await import('/public/architecture.js?bake='+version);
 const CELL=512,grid=new Map();let features=[];
+// --- building heights -------------------------------------------------------
+// Only ~8% of Tashkent's buildings carry a height or storey tag. Microdistricts
+// were built in uniform series, so an untagged block takes the median height of
+// tagged neighbours of a similar footprint; where there are none it falls back
+// to the typical height for its footprint (medians measured on the tagged set).
+let heightStats=null;
+const KX=111320*Math.cos(41.3*Math.PI/180),KY=111320,HCELL=200;
+function footprint(f){
+  const g=f.geometry,ring=g.type==='Polygon'?g.coordinates[0]:g.type==='MultiPolygon'?g.coordinates[0][0]:null;
+  if(!ring||ring.length<4)return null;
+  let a=0,x=0,y=0;for(let i=0;i<ring.length-1;i++){const p=ring[i],q=ring[i+1];a+=p[0]*KX*q[1]*KY-q[0]*KX*p[1]*KY;x+=p[0];y+=p[1];}
+  return {x:x/(ring.length-1)*KX,y:y/(ring.length-1)*KY,area:Math.abs(a)/2};
+}
+function taggedMeters(p){const h=Number.parseFloat(p.height),l=Number.parseFloat(p['building:levels']);return Number.isFinite(h)?h:Number.isFinite(l)?l*3.2:null;}
+function prior(area){return area<150?3.4:area<400?6.4:area<2000?12.8:9.6;}
+function neighbours(index,fp,skip){
+  const out=[],cx=Math.floor(fp.x/HCELL),cy=Math.floor(fp.y/HCELL);
+  for(let y=cy-1;y<=cy+1;y++)for(let x=cx-1;x<=cx+1;x++)for(const t of index.get(x+','+y)||[]){
+    if(t===skip)continue;const d=Math.hypot(t.x-fp.x,t.y-fp.y),ratio=t.area/fp.area;
+    if(d<180&&ratio>.55&&ratio<1.8)out.push({m:t.m,d});
+  }
+  return out;
+}
+function vote(list){
+  if(list.length<2&&!(list.length===1&&list[0].d<60))return null;
+  list.sort((a,b)=>a.m-b.m);return list[Math.floor((list.length-1)/2)].m;
+}
+function estimateHeights(features){
+  const index=new Map(),tagged=[];
+  for(const f of features){
+    if(f.kind!=='building'||f.properties['building:part'])continue;
+    const m=taggedMeters(f.properties);if(m===null||m>90)continue;const fp=footprint(f);if(!fp)continue;
+    const t={...fp,m};tagged.push(t);const key=Math.floor(fp.x/HCELL)+','+Math.floor(fp.y/HCELL);let list=index.get(key);if(!list)index.set(key,list=[]);list.push(t);
+  }
+  let fromNeighbours=0,fromPrior=0;
+  for(const f of features){
+    if(f.kind!=='building'||taggedMeters(f.properties)!==null)continue;
+    const fp=footprint(f);if(!fp)continue;
+    const m=vote(neighbours(index,fp,null));
+    if(m!==null){f.properties['tiny:height']=m;fromNeighbours++;}else{f.properties['tiny:height']=prior(fp.area);fromPrior++;}
+  }
+  // Leave-one-out check on buildings whose storeys are known.
+  let n=0,knn=0,knnHit=0,priorHit=0,knnErr=0,priorErr=0;
+  for(let i=0;i<tagged.length;i+=3){
+    const t=tagged[i],p=prior(t.area),v=vote(neighbours(index,t,t));n++;
+    if(Math.abs(p-t.m)<=3.3)priorHit++;priorErr+=Math.abs(p-t.m);
+    if(v!==null){knn++;if(Math.abs(v-t.m)<=3.3)knnHit++;knnErr+=Math.abs(v-t.m);}
+  }
+  return {tagged:tagged.length,fromNeighbours,fromPrior,check:{sample:n,priorWithinOneStorey:+(priorHit/n).toFixed(2),priorMeanErrorM:+(priorErr/n).toFixed(1),neighbourCoverage:+(knn/n).toFixed(2),neighbourWithinOneStorey:+(knnHit/knn).toFixed(2),neighbourMeanErrorM:+(knnErr/knn).toFixed(1)}};
+}
 function box(geometry){
   let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
   const walk=c=>{if(typeof c[0]==='number'){const p=project(c);if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1];}else for(const d of c)walk(d);};
@@ -15,18 +65,19 @@ async function load(){
   const response=await fetch('/public/data/tashkent.osm.geojson.gz');
   const text=await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).text();
   features=JSON.parse(text).features;
+  heightStats=estimateHeights(features);
   features.forEach((f,i)=>{
     const b=box(f.geometry);let pad=16;
     if(f.kind==='building'){
       // tall volumes rise into the tiles above them and shade the ones to the right
-      const p=f.properties,m=Number.parseFloat(p.height)||Number.parseFloat(p['building:levels'])*3.2||34,h=Math.min(420,m)*arch.HEIGHT_SCALE*1.15+12;
+      const p=f.properties,m=Number.parseFloat(p.height)||Number.parseFloat(p['building:levels'])*3.2||Number.parseFloat(p['tiny:height'])||34,h=Math.min(420,m)*arch.HEIGHT_SCALE*1.15+12;
       b[1]-=h;b[2]+=h*.7;b[3]+=h*.2;
     }else if(f.kind==='road')pad=44;else if(f.kind==='landmark')pad=260;
     for(let y=Math.floor((b[1]-pad)/CELL);y<=Math.floor((b[3]+pad)/CELL);y++)for(let x=Math.floor((b[0]-pad)/CELL);x<=Math.floor((b[2]+pad)/CELL);x++){
       const key=x+','+y;let list=grid.get(key);if(!list)grid.set(key,list=[]);list.push(i);
     }
   });
-  return {features:features.length,cells:grid.size,width:WIDTH,height:HEIGHT};
+  return {features:features.length,cells:grid.size,width:WIDTH,height:HEIGHT,heights:heightStats};
 }
 function select(x,y,w,h){
   const picked=new Set();
