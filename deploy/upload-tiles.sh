@@ -7,5 +7,5 @@ cd "$(dirname "$0")/.."
 TILES="${1:-$(grep -o '"baseUrl":"[^"]*"' public/data/map.json | sed 's/.*\///; s/"//')}"
 HOST="${2:-${TINY_TASHKENT_HOST:?set TINY_TASHKENT_HOST=root@server or pass it as the second argument}}"
 [[ -f "public/data/$TILES/overview.webp" ]] || { echo "public/data/$TILES is not baked" >&2; exit 1; }
-rsync -a --delete --info=progress2 --exclude size.json "public/data/$TILES/" "$HOST:/var/www/tiny-tashkent/shared/$TILES/"
+rsync -a --delete --exclude size.json "public/data/$TILES/" "$HOST:/var/www/tiny-tashkent/shared/$TILES/"
 echo "uploaded $TILES"
