@@ -1,9 +1,9 @@
-import {project,unproject,WIDTH,HEIGHT,MAP_BOUNDS} from './renderer.js?v=10';
-import {TileMap} from './tiles.js?v=14';
+import {project,unproject,WIDTH,HEIGHT,MAP_BOUNDS} from './renderer.js?v=11';
+import {TileMap} from './tiles.js?v=15';
 import {MapNavigation} from './navigation.js?v=6';
 import {normalizeSearch,searchPlaces} from './search.js?v=1';
 import {readPreferences,savePreferences,parseMapLocation} from './state.js?v=1';
-import {initAtmosphere} from './atmosphere.js?v=9';
+import {initAtmosphere} from './atmosphere.js?v=11';
 const $=s=>document.querySelector(s);
 const places=[
   {id:'amir',name:'Amir Temur xiyoboni',category:'Xiyobon',icon:'✳',coords:[69.2797551,41.3111759],desc:'Toshkent markazidagi yashil orol. Amir Temur haykali atrofidan shahar ko‘chalari turli yo‘nalishlarga yoyiladi.',keywords:'skver square amir temur park'},
@@ -33,7 +33,7 @@ const home=project([69.27885,41.3120]);
 let camera={x:home[0],y:home[1],z:1},scene=null,tileMap=null,selected=null,night=false,labels=true,w=innerWidth,h=innerHeight,dpr=Math.min(devicePixelRatio||1,2),frame=0,activeResult=-1,filtered=[],dragged=false,animation=0,ready=false;
 let mapStats=null,miniBase=null,cityPath=null,markerOrder=[],markerSelection;
 const navigation=new MapNavigation(camera,{viewport:()=>({width:w,height:h}),minZoom,constrain:clampCamera,onChange:requestDraw,onRest:scheduleSave,reducedMotion:()=>matchMedia('(prefers-reduced-motion: reduce)').matches});
-let initialZoom=innerWidth<760?1.12:1.42;
+let initialZoom=innerWidth<760?1:1.5;
 camera.z=initialZoom;
 const markerNodes=new Map();
 const prefs=readPreferences();night=prefs.night;labels=prefs.labels;showMetro=prefs.metro;
@@ -65,7 +65,8 @@ function draw(time){
   const density=Math.min(devicePixelRatio||1,moving?1.5:2);
   if(canvas.width!==Math.round(w*density)||canvas.height!==Math.round(h*density)){canvas.width=Math.round(w*density);canvas.height=Math.round(h*density);}dpr=density;
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=dimmed()?'#293d3c':'#819461';ctx.fillRect(0,0,w,h);
-  ctx.imageSmoothingEnabled=moving||camera.z<1.5;ctx.imageSmoothingQuality='low';
+  // Pixel art: enlarge with hard edges, only smooth when shrinking.
+  ctx.imageSmoothingEnabled=camera.z<1;ctx.imageSmoothingQuality='medium';
   tileMap.paint(ctx,camera,w,h,true,{moving});
   if(camera.z<.2&&cityPath){
     ctx.save();ctx.translate(w/2-camera.x*camera.z,h/2-camera.y*camera.z);ctx.scale(camera.z,camera.z);ctx.strokeStyle='#586e5499';ctx.lineWidth=1.2/camera.z;ctx.setLineDash([4/camera.z,4/camera.z]);ctx.stroke(cityPath);
@@ -201,7 +202,7 @@ function keyboard(e){
   if(e.key==='ArrowLeft')camera.x-=move;else if(e.key==='ArrowRight')camera.x+=move;else if(e.key==='ArrowUp')camera.y-=move;else if(e.key==='ArrowDown')camera.y+=move;else if(e.key==='+'||e.key==='=')changeZoom(1.25);else if(e.key==='-')changeZoom(.8);else if(e.key==='Home')resetHome();else return;
   clampCamera();requestDraw();scheduleSave();
 }
-function resetHome(){closePlace();animateTo(home[0],home[1],innerWidth<760?1.12:1.42);}
+function resetHome(){closePlace();animateTo(home[0],home[1],innerWidth<760?1:1.5);}
 function hideHint(){$('#gesture-hint').style.opacity='0';}
 const surface=$('#app'),isMapTarget=target=>target instanceof Element&&(target===canvas||!!target.closest('#markers'));
 let inputRect=null;

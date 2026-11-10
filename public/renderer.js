@@ -5,7 +5,7 @@ import {LANDMARK_ROLES} from './landmarks.js';
 import {drawLandmarkFacade,drawNeighbourhoodDetails} from './facades.js';
 const ORIGIN = [69.276, 41.315];
 const COS = Math.cos(-Math.PI / 9), SIN = Math.sin(-Math.PI / 9);
-const METER = .98, TILT = .70, MARGIN = 220;
+const METER = .98, TILT = .62, MARGIN = 220;
 export const MAP_BOUNDS = [69.115, 41.150, 69.535, 41.430];
 const [WEST,SOUTH,EAST,NORTH] = MAP_BOUNDS;
 function raw([lon, lat]) {
@@ -293,13 +293,13 @@ function drawBuilding(c,b,art){
   const {rings,seed,props}=b,ring=rings[0],rand=rng(seed),ar=area(ring),h=b.eave,base=b.base;
   if(ring.length<4)return;
   const hotel=props.name?.includes('Uzbekistan')||props['name:en']?.includes('Uzbekistan Hotel')||b.id==='way/44491343';
-  const pal={wall:b.wall,roof:blend(b.roof,'#294955',b.identity?.10:['mosque','civic'].includes(b.style)?.12:b.style==='house'?.18:.30),style:b.style,identity:b.identity,typology:b.typology,id:b.id,art};
+  const pal={wall:b.wall,roof:blend(b.roof,'#294955',b.identity?.06:['mosque','civic'].includes(b.style)?.08:b.style==='house'?.10:.14),style:b.style,identity:b.identity,typology:b.typology,id:b.id,art};
   const sides=[];
   for(const r of rings)for(let i=0;i<r.length-1;i++){const a=r[i],v=r[i+1];sides.push({a,b:v,y:(a[1]+v[1])/2});}
   sides.sort((a,b)=>a.y-b.y);
   for(const {a,b:v} of sides){
     const dx=v[0]-a[0],dy=v[1]-a[1],len=Math.hypot(dx,dy);
-    const shade=.13+.33*(.5+.5*(.76*dx+.65*dy)/(len||1));
+    const shade=.05+.50*(.5+.5*(.76*dx+.65*dy)/(len||1));
     const wall=blend(pal.wall,'#43585b',shade);
     if(h>base+.1){
       strokeShape(c,[[a[0],a[1]-base],[v[0],v[1]-base],[v[0],v[1]-h],[a[0],a[1]-h]],wall,'#4b5b546b',.5);
@@ -591,7 +591,7 @@ export async function renderCity(data, progress=()=>{}, options={}) {
     const ring=b.rings[0],height=b.h,offset=[height*.64,height*.17];
     // One silhouette prevents each overlapping edge from darkening the same
     // courtyard repeatedly. Contact shade uses a narrow fixed ground offset.
-    c.save();c.fillStyle='#29444734';c.beginPath();
+    c.save();c.fillStyle='#1c30364f';c.beginPath();
     for(let i=0;i<ring.length-1;i++){
       const a=ring[i],d=ring[i+1],p=[a,d,[d[0]+offset[0],d[1]+offset[1]],[a[0]+offset[0],a[1]+offset[1]]];
       let signed=0;for(let j=0;j<4;j++)signed+=p[j][0]*p[(j+1)%4][1]-p[(j+1)%4][0]*p[j][1];if(signed<0)p.reverse();

@@ -73,7 +73,7 @@ void main(){
   float tree = veg*smoothstep(.50,.44, lum);
   float grass = veg-tree;
   float water = (1.-veg)*smoothstep(.12,.16, min(c.g,c.b)-c.r)*smoothstep(.62,.5,lum);
-  float warm = (1.-veg)*smoothstep(.06,.12, c.r-c.b)*smoothstep(.66,.58,lum);
+  float warm = (1.-veg)*smoothstep(.06,.12, c.r-c.b)*smoothstep(.88,.80,lum);
   float dark = smoothstep(.30,.17, lum)*(1.-veg);
   float road = (1.-veg)*(1.-water)*smoothstep(.13,.07,sat)*smoothstep(.3,.36,lum)*smoothstep(.56,.48,lum);
   float built = (1.-veg)*(1.-water);
@@ -152,7 +152,7 @@ void main(){
     float lit = step(1.-.48*u_lit, h);
     float flick = .82+.18*sin(u_time*(.6+3.*h)+h*40.);
     vec3 lamp = mix(vec3(1.,.72,.36), vec3(.82,.90,1.), step(.9,hash(id+11.)));
-    float win = max(dark, warm*.55*step(.7,h)*n);
+    float win = max(dark, warm*.62*step(.62,h)*n);
     // zoomed out, single windows vanish: sprinkle lights over whole blocks instead
     win = max(win, step(1.5,zl)*built*(1.-road)*.62*step(1.-.20*u_lit,h)*(.35+.65*n));
     c += lamp*lit*win*flick*mix(.88,1.05,n)*(zl>1.5?.75:1.);
@@ -160,7 +160,7 @@ void main(){
     float lampSpot = smoothstep(.62,.92, vnoise(world/6.5));
     c += road*u_lamp*vec3(.40,.29,.14)*(.17+.34*lampSpot)*(1.+.9*u_wet);
     // floodlit pale landmarks keep their face
-    c += src*n*.55*smoothstep(.60,.74,lum)*built;
+    c += src*n*.22*smoothstep(.80,.92,lum)*built;
     // moonlit water
     c += water*n*vec3(.02,.05,.10);
   }

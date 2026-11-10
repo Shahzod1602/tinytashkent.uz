@@ -1,0 +1,56 @@
+<!doctype html><meta charset="utf-8"><title>bake</title>
+<script type="module">
+// Tile bakery: loads the OSM extract once, indexes it on a grid and renders
+// any map region with the site's own renderer. Driven over CDP by bake.py.
+const params=new URLSearchParams(location.search),version=params.get('v')||'0';
+const {renderCity,project,WIDTH,HEIGHT}=await import('/public/renderer.js?bake='+version);
+const arch=await import('/public/architecture.js?bake='+version);
+const CELL=512,grid=new Map();let features=[];
+function box(geometry){
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  const walk=c=>{if(typeof c[0]==='number'){const p=project(c);if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1];}else for(const d of c)walk(d);};
+  walk(geometry.coordinates);return [x0,y0,x1,y1];
+}
+async function load(){
+  const response=await fetch('/public/data/tashkent.osm.geojson.gz');
+  const text=await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).text();
+  features=JSON.parse(text).features;
+  features.forEach((f,i)=>{
+    const b=box(f.geometry);let pad=16;
+    if(f.kind==='building'){
+      // tall volumes rise into the tiles above them and shade the ones to the right
+      const p=f.properties,m=Number.parseFloat(p.height)||Number.parseFloat(p['building:levels'])*3.2||34,h=Math.min(420,m)*arch.HEIGHT_SCALE*1.15+12;
+      b[1]-=h;b[2]+=h*.7;b[3]+=h*.2;
+    }else if(f.kind==='road')pad=44;else if(f.kind==='landmark')pad=260;
+    for(let y=Math.floor((b[1]-pad)/CELL);y<=Math.floor((b[3]+pad)/CELL);y++)for(let x=Math.floor((b[0]-pad)/CELL);x<=Math.floor((b[2]+pad)/CELL);x++){
+      const key=x+','+y;let list=grid.get(key);if(!list)grid.set(key,list=[]);list.push(i);
+    }
+  });
+  return {features:features.length,cells:grid.size,width:WIDTH,height:HEIGHT};
+}
+function select(x,y,w,h){
+  const picked=new Set();
+  for(let gy=Math.floor(y/CELL);gy<=Math.floor((y+h)/CELL);gy++)for(let gx=Math.floor(x/CELL);gx<=Math.floor((x+w)/CELL);gx++)for(const i of grid.get(gx+','+gy)||[])picked.add(i);
+  return [...picked].sort((a,b)=>a-b).map(i=>features[i]);   // keep source order: the renderer is order-sensitive
+}
+const encode=(canvas,type,quality)=>new Promise(resolve=>canvas.toBlob(blob=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(blob);},type,quality));
+async function render(x,y,w,h,options={}){
+  const started=performance.now(),data={features:select(x,y,w,h)};
+  const result=await renderCity(data,()=>{},{region:{x,y,width:w,height:h},pixelRatio:options.ratio||2,...options});
+  if(options.pixel){
+    // True pixel art: supersampled vector drawing is point-sampled (no antialiasing)
+    // down to one art pixel per world pixel, then snapped to a stepped palette.
+    const k=options.ratio,src=result.canvas,out=document.createElement('canvas');out.width=w;out.height=h;
+    const from=src.getContext('2d').getImageData(0,0,src.width,src.height).data,octx=out.getContext('2d'),to=octx.createImageData(w,h),d=to.data,half=Math.floor(k/2),levels=options.levels||0;
+    for(let py=0;py<h;py++)for(let px=0;px<w;px++){
+      const si=((py*k+half)*src.width+px*k+half)*4,di=(py*w+px)*4;
+      for(let ch=0;ch<3;ch++){const v=from[si+ch];d[di+ch]=levels?Math.round(Math.round(v/255*levels)/levels*255):v;}
+      d[di+3]=255;
+    }
+    octx.putImageData(to,0,0);result.canvas=out;
+  }
+  const image=await encode(result.canvas,options.type||'image/png',options.quality);
+  return {image,features:data.features.length,buildings:result.buildings,ms:Math.round(performance.now()-started),size:[result.canvas.width,result.canvas.height]};
+}
+window.bake={load,render,select,project,WIDTH,HEIGHT,ready:true};
+</script>

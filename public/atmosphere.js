@@ -1,6 +1,6 @@
 // Time of day, weather and seasons for the map. "Avto" follows real Tashkent:
 // local clock, sunrise/sunset, current weather (Open-Meteo, no key) and month.
-import {createFx} from './fx.js?v=4';
+import {createFx} from './fx.js?v=5';
 import {createSound} from './sound.js?v=4';
 
 const STORAGE_KEY = 'tiny-tashkent:atmosphere:v1';
@@ -11,7 +11,6 @@ export const GROUPS = {
   time: {label: 'VAQT', options: [['auto','Avto'],['dawn','Tong'],['day','Kun'],['golden','Oqshom'],['night','Tun']]},
   weather: {label: 'OB-HAVO', options: [['auto','Avto'],['clear','Quyosh'],['cloudy','Bulut'],['rain','Yomg‘ir'],['snow','Qor']]},
   season: {label: 'FASL', options: [['auto','Avto'],['spring','Bahor'],['summer','Yoz'],['autumn','Kuz'],['winter','Qish']]},
-  pixel: {label: 'PIXEL ART', options: [['off','O‘chiq'],['2','Mayda'],['3','O‘rta'],['4','Yirik']]},
 };
 const valid = (group, value) => GROUPS[group].options.some(([id]) => id === value);
 
@@ -91,7 +90,7 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
   if (!fx) { target?.remove(); document.querySelector('#atmo-bar')?.remove(); panel?.remove(); document.querySelector('#fx-toggle')?.remove(); return null; }
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const state = {time: 'auto', weather: 'auto', season: 'auto', pixel: 'off', enabled: true, sound: false};
+  const state = {time: 'auto', weather: 'auto', season: 'auto', enabled: true, sound: false};
   let fromLink = false;
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -171,12 +170,10 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
 
   const sound = createSound(() => ({look, resolved, zoom: camera.z}));
 
-  // Pixel-art mode. ?px=3&lv=6 in the hash previews a size without saving it.
-  const pixel = {size: 0, levels: 12}, preview = new URLSearchParams(location.hash.replace(/^#/, ''));
-  const applyPixel = () => { pixel.size = state.pixel === 'off' ? 0 : +state.pixel; };
-  applyPixel();
-  if (+preview.get('px') >= 1 && +preview.get('px') <= 8) pixel.size = +preview.get('px');
-  if (+preview.get('lv') >= 2 && +preview.get('lv') <= 16) pixel.levels = +preview.get('lv');
+  // The map is pixel art: one art pixel per world pixel. When zoomed in, the
+  // shader works on that same grid so rain, snow and lit windows stay blocky
+  // and aligned with the drawing instead of floating over it as smooth overlays.
+  const LEVELS = 14, artPixel = zoom => zoom >= 1 ? zoom : 0;
 
   // --- drawing ---
   let last = 0, ticker = 0, lastRender = -1, nextFlash = 0, flashAt = -1, dirty = false;
@@ -209,7 +206,7 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
     if (dirty) { fx.upload(); dirty = false; }
     stepLook(now); stepFlash(now);
     const {width, height} = viewport();
-    fx.render(look, camera, width, height, reduced.matches ? 0 : (now - epoch) / 1000, pixel.size, pixel.levels);
+    fx.render(look, camera, width, height, reduced.matches ? 0 : (now - epoch) / 1000, artPixel(camera.z), LEVELS);
     lastRender = now;
   }
   // How lively the idle scene needs to be: precipitation is smooth, a clear day only shimmers.
@@ -279,9 +276,7 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
   }
   function choose(group, value) {
     if (!valid(group, value)) return;
-    state[group] = value; persist();
-    if (group === 'pixel') { applyPixel(); lastRender = -1; kick(); renderPanel(); return; }
-    fromLink = false; retarget(); renderPanel();
+    state[group] = value; fromLink = false; persist(); retarget(); renderPanel();
   }
   function setEnabled(value, announce = true) {
     state.enabled = value; persist();
@@ -338,7 +333,7 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
       const out = document.createElement('canvas'), still = createFx(canvas, out);
       if (!still) return null;
       still.upload();
-      return still.render({...look, flash: 0}, view, width, height, (performance.now() - epoch) / 1000, pixel.size, pixel.levels) ? out : null;
+      return still.render({...look, flash: 0}, view, width, height, (performance.now() - epoch) / 1000, artPixel(view.z), LEVELS) ? out : null;
     },
     describe() { return `${TIME_NAMES[resolved.time]} · ${label('season', resolved.season)}`; },
     state, sound, resolved: () => resolved, fromLink: () => fromLink,

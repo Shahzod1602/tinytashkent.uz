@@ -1,4 +1,5 @@
 public/data/tiles-v10/
+public/data/tiles-v11/
 node_modules/
 .DS_Store
 *.sqlite*

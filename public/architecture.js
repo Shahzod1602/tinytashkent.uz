@@ -1,7 +1,8 @@
 // Building volumes come from OSM. Untagged heights and materials are illustrated
 // approximations, never measurements inferred from Google imagery.
 import {LANDMARK_ROLES} from './landmarks.js';
-export const HEIGHT_SCALE=1.38*.98*Math.sqrt(1-.70**2);
+// Vertical pixels per metre: the 0.62 ground tilt implies the first factor; 1.7 exaggerates volumes so the city reads as a model.
+export const HEIGHT_SCALE=1.7*.98*Math.sqrt(1-.62**2);
 const colors={white:'#f2eee2',ivory:'#e8dfc8',beige:'#d7c5a5',cream:'#eadbb8',brown:'#92705b',red:'#ad6952',darkred:'#8e574c',grey:'#9ba5a0',gray:'#9ba5a0',lightgrey:'#c7ccc4',lightgray:'#c7ccc4',darkgrey:'#687878',darkgray:'#687878',green:'#739288',blue:'#608f9f',black:'#4c5c60',silver:'#b8c2be',yellow:'#ddc489',orange:'#c18559',pink:'#d2b4a5'};
 export function buildingColor(value,fallback){
   if(!value)return fallback;
@@ -21,7 +22,10 @@ export function buildingProfile(feature,area,seed){
   const identity=LANDMARK_ROLES.get(feature.id);
   const levels=Number.parseFloat(p['building:levels']);
   const tagged=Number.parseFloat(p.height);
-  const inferred=identity==='humo'?19.2:kind==='apartments'?19.2:kind==='garage'||kind==='garages'||kind==='shed'?3.2:area>2200?12:area>550?10:area<45?3.4:6.4+(seed%4)*.6;
+  // Untagged volumes (most of Tashkent) get a typical local height by footprint:
+  // courtyard houses, 4-5 storey panel blocks, the odd 9-storey slab, low halls.
+  const inferred=identity==='humo'?19.2:kind==='apartments'?(area>420&&seed%5<2?28.8:area>260?16:12.8):kind==='garage'||kind==='garages'||kind==='shed'||kind==='roof'?3.2:['school','kindergarten','university','college','hospital'].includes(kind)?(area>700?12.8:9.6):['retail','commercial','supermarket'].includes(kind)?(area>1500?10:7):area>2200?11:area>1150?(seed%7<2?28.8:14)
+    :area>480?(seed%9<2?28.8:seed%9<7?16:12.8):area>230?(seed%4?9.6:6.4):area<40?3.2:4.2+(seed%4)*.8;
   const meters=Math.max(1,Math.min(420,Number.isFinite(tagged)?tagged:Number.isFinite(levels)?levels*3.2:inferred));
   const minTag=Number.parseFloat(p.min_height),minLevel=Number.parseFloat(p['building:min_level']);
   const minMeters=Math.max(0,Math.min(meters,Number.isFinite(minTag)?minTag:Number.isFinite(minLevel)?minLevel*3.2:0));
