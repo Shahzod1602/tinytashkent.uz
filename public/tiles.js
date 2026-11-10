@@ -7,7 +7,7 @@ export class TileMap {
     this.active=0;this.limit=4;this.clock=0;this.cacheBytes=0;this.maxCacheBytes=96*1024*1024;
   }
   static async load(onChange){
-    const response=await fetch('./data/map.json?v=11');if(!response.ok)throw new Error('Map manifest unavailable');
+    const response=await fetch('./data/map.json?v=12');if(!response.ok)throw new Error('Map manifest unavailable');
     const map=new TileMap(await response.json(),onChange);
     map.overview=await map.loadImage(map.manifest.overview);return map;
   }

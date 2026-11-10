@@ -84,7 +84,7 @@ export function awakeAt(hour) {
   return .75;
 }
 
-export function initAtmosphere({source, camera, viewport, requestDraw, toast, onActiveChange}) {
+export function initAtmosphere({source, camera, viewport, requestDraw, toast, onActiveChange, artScale = () => 1}) {
   const target = document.querySelector('#fx'), button = document.querySelector('#atmo-button'), panel = document.querySelector('#atmo-panel');
   const fx = target ? createFx(source, target) : null;
   if (!fx) { target?.remove(); document.querySelector('#atmo-bar')?.remove(); panel?.remove(); document.querySelector('#fx-toggle')?.remove(); return null; }
@@ -170,10 +170,10 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
 
   const sound = createSound(() => ({look, resolved, zoom: camera.z}));
 
-  // The map is pixel art: one art pixel per world pixel. When zoomed in, the
+  // The map is pixel art with artScale() art pixels per world pixel. When zoomed in, the
   // shader works on that same grid so rain, snow and lit windows stay blocky
   // and aligned with the drawing instead of floating over it as smooth overlays.
-  const LEVELS = 14, artPixel = zoom => zoom >= 1 ? zoom : 0;
+  const LEVELS = 16, artPixel = zoom => zoom >= artScale() ? zoom / artScale() : 0;
 
   // --- drawing ---
   let last = 0, ticker = 0, lastRender = -1, nextFlash = 0, flashAt = -1, dirty = false;

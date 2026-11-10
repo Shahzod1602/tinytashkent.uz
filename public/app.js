@@ -1,9 +1,9 @@
 import {project,unproject,WIDTH,HEIGHT,MAP_BOUNDS} from './renderer.js?v=11';
-import {TileMap} from './tiles.js?v=15';
+import {TileMap} from './tiles.js?v=16';
 import {MapNavigation} from './navigation.js?v=6';
 import {normalizeSearch,searchPlaces} from './search.js?v=1';
 import {readPreferences,savePreferences,parseMapLocation} from './state.js?v=1';
-import {initAtmosphere} from './atmosphere.js?v=13';
+import {initAtmosphere} from './atmosphere.js?v=14';
 const $=s=>document.querySelector(s);
 const places=[
   {id:'amir',name:'Amir Temur Square',category:'Park',icon:'✳',coords:[69.2797551,41.3111759],desc:'A green island in the heart of Tashkent. Streets fan out in every direction from the statue of Amir Temur.',keywords:'skver square amir temur park'},
@@ -43,7 +43,9 @@ document.body.classList.toggle('night',night);$('#markers').classList.toggle('la
 $('#labels-toggle').setAttribute('aria-pressed',String(labels));$('#metro-toggle').setAttribute('aria-pressed',String(showMetro));$('#theme-toggle').setAttribute('aria-pressed',String(night));
 const rememberPreferences=()=>savePreferences({labels,metro:showMetro,night});
 // Live atmosphere (time of day, weather, seasons). Null when WebGL is unavailable; the classic evening toggle remains.
-const atmo=initAtmosphere({source:canvas,camera,viewport:()=>({width:w,height:h}),requestDraw,toast,onActiveChange:on=>{if(!on)document.body.classList.toggle('night',night);}});
+// Art pixels per world pixel at full detail (from the tile manifest).
+const artScale=()=>tileMap?.manifest.detailPixelRatio||1;
+const atmo=initAtmosphere({source:canvas,camera,artScale,viewport:()=>({width:w,height:h}),requestDraw,toast,onActiveChange:on=>{if(!on)document.body.classList.toggle('night',night);}});
 const dimmed=()=>night&&!atmo?.active;
 globalThis.tinyTashkent={atmo};
 for(const p of places){
@@ -68,7 +70,7 @@ function draw(time){
   if(canvas.width!==Math.round(w*density)||canvas.height!==Math.round(h*density)){canvas.width=Math.round(w*density);canvas.height=Math.round(h*density);}dpr=density;
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=dimmed()?'#293d3c':'#819461';ctx.fillRect(0,0,w,h);
   // Pixel art: enlarge with hard edges, only smooth when shrinking.
-  ctx.imageSmoothingEnabled=camera.z<1;ctx.imageSmoothingQuality='medium';
+  ctx.imageSmoothingEnabled=camera.z<artScale();ctx.imageSmoothingQuality='medium';
   tileMap.paint(ctx,camera,w,h,true,{moving});
   if(camera.z<.2&&cityPath){
     ctx.save();ctx.translate(w/2-camera.x*camera.z,h/2-camera.y*camera.z);ctx.scale(camera.z,camera.z);ctx.strokeStyle='#586e5499';ctx.lineWidth=1.2/camera.z;ctx.setLineDash([4/camera.z,4/camera.z]);ctx.stroke(cityPath);

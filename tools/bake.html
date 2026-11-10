@@ -91,7 +91,8 @@ async function render(x,y,w,h,options={}){
   if(options.pixel){
     // True pixel art: supersampled vector drawing is point-sampled (no antialiasing)
     // down to one art pixel per world pixel, then snapped to a stepped palette.
-    const k=options.ratio,src=result.canvas,out=document.createElement('canvas');out.width=w;out.height=h;
+    // options.art = art pixels per world pixel (1 = chunky, 1.5 = finer); ratio/art must be a whole number.
+    const art=options.art||1,k=Math.round(options.ratio/art),src=result.canvas,out=document.createElement('canvas');w=Math.round(w*art);h=Math.round(h*art);out.width=w;out.height=h;
     const from=src.getContext('2d').getImageData(0,0,src.width,src.height).data,octx=out.getContext('2d'),to=octx.createImageData(w,h),d=to.data,half=Math.floor(k/2),levels=options.levels||0;
     for(let py=0;py<h;py++)for(let px=0;px<w;px++){
       const si=((py*k+half)*src.width+px*k+half)*4,di=(py*w+px)*4;

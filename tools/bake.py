@@ -45,7 +45,8 @@ class Page:
         return base64.b64decode(r.pop('image')), r
 
 TILE, MAX_LEVEL = 1024, 5
-STYLE = {'ratio': 3, 'pixel': True, 'levels': 12, 'type': 'image/webp', 'quality': 1}
+ART = 1.5   # art pixels per world pixel at level 0 (map.json detailPixelRatio)
+STYLE = {'ratio': 3, 'art': ART, 'pixel': True, 'levels': 12, 'type': 'image/webp', 'quality': 1}
 
 def pyramid(out):
     """Zoomed-out levels are area-averaged from the pixel-art level below."""
@@ -56,12 +57,16 @@ def pyramid(out):
         for ty in range(math.ceil(H / span)):
             for tx in range(math.ceil(W / span)):
                 w, h = min(span, W - tx * span), min(span, H - ty * span)
-                sheet = Image.new('RGB', (math.ceil(w / 2 ** (level - 1)), math.ceil(h / 2 ** (level - 1))), '#819461')
+                # Each child covers half the span; shrink it to this level's scale (1 px per 2**level world px).
+                sheet = Image.new('RGB', (math.ceil(w / 2 ** level), math.ceil(h / 2 ** level)), '#819461')
                 for dy in (0, 1):
                     for dx in (0, 1):
                         child = f'{out}/{level - 1}/{tx * 2 + dx}_{ty * 2 + dy}.webp'
-                        if os.path.exists(child): sheet.paste(Image.open(child).convert('RGB'), (dx * TILE, dy * TILE))
-                sheet.resize((math.ceil(w / 2 ** level), math.ceil(h / 2 ** level)), Image.BOX).save(f'{out}/{level}/{tx}_{ty}.webp', quality=90, method=6)
+                        if not os.path.exists(child): continue
+                        cw, ch = min(span // 2, W - (tx * 2 + dx) * span // 2), min(span // 2, H - (ty * 2 + dy) * span // 2)
+                        image = Image.open(child).convert('RGB').resize((math.ceil(cw / 2 ** level), math.ceil(ch / 2 ** level)), Image.BOX)
+                        sheet.paste(image, (dx * TILE // 2, dy * TILE // 2))
+                sheet.save(f'{out}/{level}/{tx}_{ty}.webp', quality=90, method=6)
         print('level', level, 'done', file=sys.stderr)
     span = TILE * 2 ** MAX_LEVEL
     overview = Image.new('RGB', (math.ceil(W / 2 ** MAX_LEVEL), math.ceil(H / 2 ** MAX_LEVEL)))

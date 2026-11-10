@@ -31,12 +31,12 @@ Needs Google Chrome and `pip install websockets pillow`.
 
 ```sh
 python3 -m http.server 8766 &                              # the bakery page is served from the repo root
-python3 tools/bake.py all public/data/tiles-v11            # every level-0 tile (resumable)
-python3 tools/bake.py pyramid public/data/tiles-v11        # zoom levels + overview
-python3 tools/bake.py at 69.28 41.311 720 405 out.png 3 '{"pixel":true,"levels":12}'   # preview one spot
+python3 tools/bake.py all public/data/tiles-v12            # every level-0 tile (resumable)
+python3 tools/bake.py pyramid public/data/tiles-v12        # zoom levels + overview
+python3 tools/bake.py at 69.28 41.311 720 405 out.png 3 '{"pixel":true,"levels":12,"art":1.5}'   # preview one spot
 ```
 
-If a re-bake changes how tiles look, bump the folder name (`tiles-v12`) and the
+If a re-bake changes how tiles look, bump the folder name (`tiles-v13`) and the
 `version`, `baseUrl` and `overview` fields in `public/data/map.json`, so browsers
 do not mix old cached tiles with new ones.
 
