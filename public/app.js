@@ -3,7 +3,7 @@ import {TileMap} from './tiles.js?v=15';
 import {MapNavigation} from './navigation.js?v=6';
 import {normalizeSearch,searchPlaces} from './search.js?v=1';
 import {readPreferences,savePreferences,parseMapLocation} from './state.js?v=1';
-import {initAtmosphere} from './atmosphere.js?v=12';
+import {initAtmosphere} from './atmosphere.js?v=13';
 const $=s=>document.querySelector(s);
 const places=[
   {id:'amir',name:'Amir Temur Square',category:'Park',icon:'✳',coords:[69.2797551,41.3111759],desc:'A green island in the heart of Tashkent. Streets fan out in every direction from the statue of Amir Temur.',keywords:'skver square amir temur park'},

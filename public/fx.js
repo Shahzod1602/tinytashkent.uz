@@ -158,7 +158,7 @@ void main(){
     c += lamp*lit*win*flick*mix(.88,1.05,n)*(zl>1.5?.75:1.);
     // sodium glow of the street network, mirrored by wet asphalt
     float lampSpot = smoothstep(.62,.92, vnoise(world/6.5));
-    c += road*u_lamp*vec3(.40,.29,.14)*(.17+.34*lampSpot)*(1.+.9*u_wet);
+    c += road*u_lamp*vec3(.36,.27,.14)*(.20+.22*lampSpot)*(1.+.35*u_wet);
     // floodlit pale landmarks keep their face
     c += src*n*.22*smoothstep(.80,.92,lum)*built;
     // moonlit water

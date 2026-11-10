@@ -1,6 +1,6 @@
 // Time of day, weather and seasons for the map. "Avto" follows real Tashkent:
 // local clock, sunrise/sunset, current weather (Open-Meteo, no key) and month.
-import {createFx} from './fx.js?v=5';
+import {createFx} from './fx.js?v=6';
 import {createSound} from './sound.js?v=4';
 
 const STORAGE_KEY = 'tiny-tashkent:atmosphere:v1';
