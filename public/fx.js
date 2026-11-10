@@ -30,6 +30,8 @@ uniform float u_cloud;
 uniform float u_wet;
 uniform float u_fog;
 uniform float u_flash;
+uniform float u_px;      // pixel-art cell size in CSS px (0 = off)
+uniform float u_levels;  // colour steps per channel in pixel-art mode
 
 float hash(vec2 p){
   p = mod(p, 1024.);
@@ -44,10 +46,24 @@ float vnoise(vec2 p){
 }
 float fbm(vec2 p){ return .55*vnoise(p)+.3*vnoise(p*2.03+17.)+.15*vnoise(p*4.01+41.); }
 
+float bayer2(vec2 a){ a = floor(a); return fract(a.x/2.+a.y*a.y*.75); }
+float bayer4(vec2 a){ return bayer2(.5*a)*.25+bayer2(a); }
+
 void main(){
   vec2 css = vec2(v_uv.x, 1.-v_uv.y)*u_res;
+  vec2 uv = v_uv;
+  vec2 cellId = vec2(0.);
+  vec3 src;
+  if(u_px>0.){
+    // Chunky pixels anchored to the map, so they travel with it instead of swimming.
+    vec2 anchored = u_cam.xy*u_cam.z+(css-.5*u_res);
+    cellId = floor(anchored/u_px);
+    css = (cellId+.5)*u_px-u_cam.xy*u_cam.z+.5*u_res;
+    uv = vec2(css.x/u_res.x, 1.-css.y/u_res.y);
+    vec2 o = .25*u_px/u_res;
+    src = .25*(texture2D(u_tex, uv+vec2(o.x,o.y)).rgb+texture2D(u_tex, uv+vec2(-o.x,o.y)).rgb+texture2D(u_tex, uv+vec2(o.x,-o.y)).rgb+texture2D(u_tex, uv-vec2(o.x,o.y)).rgb);
+  } else src = texture2D(u_tex, uv).rgb;
   vec2 world = u_cam.xy+(css-.5*u_res)/u_cam.z;
-  vec3 src = texture2D(u_tex, v_uv).rgb;
   vec3 c = src;
   float lum = dot(c, vec3(.299,.587,.114));
   float mx = max(c.r,max(c.g,c.b)), mn = min(c.r,min(c.g,c.b)), sat = mx-mn;
@@ -199,10 +215,16 @@ void main(){
   // soft frame
   float vig = smoothstep(.95,.35, length((q-.5)*vec2(1.,.9)));
   c *= mix(1., .80+.20*vig, .15+.85*n);
+  c = clamp(c,0.,1.);
+  if(u_px>0.){
+    // limited palette with ordered dithering, applied after all lighting
+    float d = bayer4(cellId)-.47;
+    c = floor(c*u_levels+.5+d*.42)/u_levels;
+  }
   gl_FragColor = vec4(clamp(c,0.,1.),1.);
 }`;
 
-const UNIFORMS = ['u_tex','u_res','u_cam','u_time','u_mul','u_add','u_night','u_lit','u_lamp','u_sun','u_warm','u_season','u_cover','u_rain','u_snow','u_cloud','u_wet','u_fog','u_flash'];
+const UNIFORMS = ['u_tex','u_res','u_cam','u_time','u_mul','u_add','u_night','u_lit','u_lamp','u_sun','u_warm','u_season','u_cover','u_rain','u_snow','u_cloud','u_wet','u_fog','u_flash','u_px','u_levels'];
 
 function compile(gl, type, source) {
   const shader = gl.createShader(type);
@@ -259,7 +281,7 @@ export function createFx(source, target) {
       else { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, source); textureWidth = source.width; textureHeight = source.height; }
     },
     get hasFrame() { return textureWidth > 0; },
-    render(look, camera, width, height, seconds) {
+    render(look, camera, width, height, seconds, pixel = 0, levels = 6) {
       if (lost || !textureWidth) return false;
       gl.viewport(0, 0, target.width, target.height);
       gl.uniform2f(locations.u_res, width, height);
@@ -280,6 +302,8 @@ export function createFx(source, target) {
       gl.uniform1f(locations.u_wet, look.wet);
       gl.uniform1f(locations.u_fog, look.fog);
       gl.uniform1f(locations.u_flash, look.flash || 0);
+      gl.uniform1f(locations.u_px, pixel);
+      gl.uniform1f(locations.u_levels, levels);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       return true;
     },
