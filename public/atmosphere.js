@@ -1,6 +1,7 @@
 // Time of day, weather and seasons for the map. "Avto" follows real Tashkent:
 // local clock, sunrise/sunset, current weather (Open-Meteo, no key) and month.
 import {createFx} from './fx.js?v=2';
+import {createSound} from './sound.js?v=4';
 
 const STORAGE_KEY = 'tiny-tashkent:atmosphere:v1';
 const WEATHER_KEY = 'tiny-tashkent:weather:v1';
@@ -86,14 +87,14 @@ export function awakeAt(hour) {
 export function initAtmosphere({source, camera, viewport, requestDraw, toast, onActiveChange}) {
   const target = document.querySelector('#fx'), button = document.querySelector('#atmo-button'), panel = document.querySelector('#atmo-panel');
   const fx = target ? createFx(source, target) : null;
-  if (!fx) { target?.remove(); button?.remove(); panel?.remove(); document.querySelector('#fx-toggle')?.remove(); return null; }
+  if (!fx) { target?.remove(); document.querySelector('#atmo-bar')?.remove(); panel?.remove(); document.querySelector('#fx-toggle')?.remove(); return null; }
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const state = {time: 'auto', weather: 'auto', season: 'auto', enabled: true};
+  const state = {time: 'auto', weather: 'auto', season: 'auto', enabled: true, sound: false};
   let fromLink = false;
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved && typeof saved === 'object') { for (const group of Object.keys(GROUPS)) if (valid(group, saved[group])) state[group] = saved[group]; if (typeof saved.enabled === 'boolean') state.enabled = saved.enabled; }
+    if (saved && typeof saved === 'object') { for (const group of Object.keys(GROUPS)) if (valid(group, saved[group])) state[group] = saved[group]; if (typeof saved.enabled === 'boolean') state.enabled = saved.enabled; if (typeof saved.sound === 'boolean') state.sound = saved.sound; }
   } catch {}
   const persist = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {} };
 
@@ -167,6 +168,8 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
     renderButton(); kick();
   }
 
+  const sound = createSound(() => ({look, resolved, zoom: camera.z}));
+
   // --- drawing ---
   let last = 0, ticker = 0, lastRender = -1, nextFlash = 0, flashAt = -1, dirty = false;
   const epoch = performance.now();
@@ -183,11 +186,15 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
     if (far < .004) { for (const key of Object.keys(look)) if (key !== 'flash') look[key] = Array.isArray(goal[key]) ? [...goal[key]] : goal[key]; settled = true; }
   }
   function stepFlash(now) {
-    if (resolved.weather !== 'storm' || reduced.matches) { look.flash = 0; return; }
-    if (!nextFlash) nextFlash = now + 3000 + Math.random() * 6000;
-    if (now > nextFlash) { flashAt = now; nextFlash = now + 5000 + Math.random() * 11000; }
+    if (resolved.weather !== 'storm') { look.flash = 0; nextFlash = 0; return; }
+    if (!nextFlash) nextFlash = now + 2500 + Math.random() * 5000;
+    if (now > nextFlash) {
+      flashAt = now; nextFlash = now + 5000 + Math.random() * 11000;
+      // light first, thunder after: the further the strike, the longer the wait and the softer the roll
+      const distance = Math.random(); sound.thunder(.25 + distance * 2.2, 1 - .45 * distance);
+    }
     const age = now - flashAt;
-    look.flash = flashAt > 0 && age < 420 ? (age < 70 ? .55 : age < 130 ? .08 : age < 210 ? .4 : .4 * (1 - (age - 210) / 210)) : 0;
+    look.flash = !reduced.matches && flashAt > 0 && age < 420 ? (age < 70 ? .55 : age < 130 ? .08 : age < 210 ? .4 : .4 * (1 - (age - 210) / 210)) : 0;
   }
   function paint(now) {
     if (!state.enabled || fx.lost) return;
@@ -269,18 +276,40 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
   function setEnabled(value, announce = true) {
     state.enabled = value; persist();
     target.hidden = !value; document.body.classList.toggle('fx-on', value);
-    if (button) button.hidden = !value; if (!value && panel) panel.hidden = true;
+    if (bar) bar.hidden = !value; if (!value && panel) panel.hidden = true; if (!value) sound.stop(); else if (state.sound) armSound();
     const toggle = document.querySelector('#fx-toggle'); toggle?.setAttribute('aria-pressed', String(value));
     if (value) { dirty = true; retarget(); } else document.body.classList.remove('night');
     onActiveChange?.(value); requestDraw();
     if (announce) toast(value ? 'Jonli atmosfera yoqildi' : 'Atmosfera o‘chirildi');
   }
+  // --- sound: browsers only allow audio after a gesture, so a saved "on" waits for the first tap ---
+  const bar = document.querySelector('#atmo-bar'), soundButton = document.querySelector('#sound-button');
+  const showSound = () => { soundButton?.setAttribute('aria-pressed', String(state.sound)); if (soundButton) soundButton.title = state.sound ? 'Ovozni o‘chirish' : 'Shahar ovozlarini yoqish'; };
+  function armSound() {
+    if (sound.on || !state.sound) return;
+    const begin = () => { removeEventListener('pointerdown', begin, true); removeEventListener('keydown', begin, true); if (state.sound && state.enabled) sound.start(); };
+    addEventListener('pointerdown', begin, true); addEventListener('keydown', begin, true);
+  }
+  if (soundButton && !sound.supported) soundButton.remove();
+  soundButton?.addEventListener('click', () => {
+    state.sound = !state.sound; persist(); showSound();
+    if (state.sound) { if (sound.start()) toast('Ovoz yoqildi: ' + soundscape()); else { state.sound = false; showSound(); toast('Bu brauzerda ovoz ishlamadi'); } }
+    else { sound.stop(); toast('Ovoz o‘chirildi'); }
+  });
+  function soundscape() {
+    if (resolved.weather === 'storm') return 'jala va momaqaldiroq';
+    if (resolved.weather === 'rain') return 'yomg‘ir shovqini';
+    if (resolved.weather === 'snow') return 'qorli sokinlik';
+    if (look.night > .6) return resolved.season === 'winter' ? 'tungi shahar' : 'tungi chigirtkalar';
+    return resolved.season === 'winter' ? 'qishki shahar' : 'qushlar va shahar';
+  }
+  showSound(); if (state.enabled) armSound();
   document.querySelector('#fx-toggle')?.addEventListener('click', () => setEnabled(!state.enabled));
   window.addEventListener('hashchange', () => { if (readHash()) { fromLink = true; retarget(); renderPanel(); } });
 
   build();
   target.hidden = !state.enabled; document.body.classList.toggle('fx-on', state.enabled);
-  if (button) button.hidden = !state.enabled;
+  if (bar) bar.hidden = !state.enabled;
   document.querySelector('#fx-toggle')?.setAttribute('aria-pressed', String(state.enabled));
   goal = computeGoal();
   // First frame shows the scene immediately instead of fading in from a summer noon.
@@ -302,6 +331,6 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
       return still.render({...look, flash: 0}, view, width, height, (performance.now() - epoch) / 1000) ? out : null;
     },
     describe() { return `${TIME_NAMES[resolved.time]} · ${label('season', resolved.season)}`; },
-    state, resolved: () => resolved, fromLink: () => fromLink,
+    state, sound, resolved: () => resolved, fromLink: () => fromLink,
   };
 }

@@ -8,7 +8,7 @@ extra = sys.argv[5:]
 mobile = 'mobile' in extra
 port = 9300 + (hash(out) % 500)
 chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-proc = subprocess.Popen([chrome, '--headless=new', '--enable-unsafe-swiftshader', '--hide-scrollbars', f'--remote-debugging-port={port}', f'--user-data-dir={tempfile.mkdtemp()}', f'--window-size={width},{height}', 'about:blank'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+proc = subprocess.Popen([chrome, '--headless=new', '--enable-unsafe-swiftshader', '--hide-scrollbars', '--autoplay-policy=no-user-gesture-required', '--mute-audio', f'--remote-debugging-port={port}', f'--user-data-dir={tempfile.mkdtemp()}', f'--window-size={width},{height}', 'about:blank'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 async def main():
     for _ in range(50):
         try:

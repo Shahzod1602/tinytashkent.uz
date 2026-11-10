@@ -3,7 +3,7 @@ import {TileMap} from './tiles.js?v=14';
 import {MapNavigation} from './navigation.js?v=6';
 import {normalizeSearch,searchPlaces} from './search.js?v=1';
 import {readPreferences,savePreferences,parseMapLocation} from './state.js?v=1';
-import {initAtmosphere} from './atmosphere.js?v=2';
+import {initAtmosphere} from './atmosphere.js?v=6';
 const $=s=>document.querySelector(s);
 const places=[
   {id:'amir',name:'Amir Temur xiyoboni',category:'Xiyobon',icon:'✳',coords:[69.2797551,41.3111759],desc:'Toshkent markazidagi yashil orol. Amir Temur haykali atrofidan shahar ko‘chalari turli yo‘nalishlarga yoyiladi.',keywords:'skver square amir temur park'},
@@ -43,6 +43,7 @@ const rememberPreferences=()=>savePreferences({labels,metro:showMetro,night});
 // Live atmosphere (time of day, weather, seasons). Null when WebGL is unavailable; the classic evening toggle remains.
 const atmo=initAtmosphere({source:canvas,camera,viewport:()=>({width:w,height:h}),requestDraw,toast,onActiveChange:on=>{if(!on)document.body.classList.toggle('night',night);}});
 const dimmed=()=>night&&!atmo?.active;
+globalThis.tinyTashkent={atmo};
 for(const p of places){
   p.point=project(p.coords);
   const b=document.createElement('button');b.className='map-marker';b.dataset.id=p.id;b.setAttribute('aria-label',p.name);b.innerHTML=`<span class="marker-label">${p.name}</span><span class="marker-pin"></span>`;b.addEventListener('click',()=>selectPlace(p.id));$('#markers').append(b);markerNodes.set(p.id,b);

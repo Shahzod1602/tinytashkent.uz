@@ -32,7 +32,18 @@ dialog{color:var(--paper);background:var(--surface);border:var(--edge);box-shado
 #fx[hidden]{display:none}
 body.fx-on #theme-toggle{display:none}
 .setting-toggle small{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-weight:400}
-.atmo-button{position:absolute;top:106px;left:max(12px,env(safe-area-inset-left));z-index:4;display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;background:#1d2433ed;border:1px solid #eeeade75;box-shadow:2px 2px 0 #16202a30;color:var(--paper);font-family:var(--display);font-size:15px;border-radius:0;cursor:pointer;max-width:calc(100% - 24px);white-space:nowrap}
+.atmo-bar{position:absolute;top:106px;left:max(12px,env(safe-area-inset-left));z-index:4;display:flex;gap:6px;max-width:calc(100% - 24px)}
+.atmo-bar[hidden]{display:none}
+.sound-button{flex-shrink:0;width:34px;height:34px;display:grid;place-items:center;padding:0;background:#1d2433ed;border:1px solid #eeeade75;box-shadow:2px 2px 0 #16202a30;border-radius:0;cursor:pointer}
+.sound-button svg{width:18px;height:18px;fill:var(--muted)}
+.sound-button .sound-waves{display:none}
+.sound-button[aria-pressed=true]{border-color:var(--accent)}
+.sound-button[aria-pressed=true] svg{fill:var(--accent)}
+.sound-button[aria-pressed=true] .sound-waves{display:inline}
+.sound-button[aria-pressed=true] .sound-mute{display:none}
+.sound-button:hover{border-color:var(--accent)}
+.sound-button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.atmo-button{display:flex;min-width:0;align-items:center;gap:8px;height:34px;padding:0 10px;background:#1d2433ed;border:1px solid #eeeade75;box-shadow:2px 2px 0 #16202a30;color:var(--paper);font-family:var(--display);font-size:15px;border-radius:0;cursor:pointer;white-space:nowrap}
 .atmo-button[hidden]{display:none}
 .atmo-button:hover,.atmo-button[aria-expanded=true]{border-color:var(--accent)}
 .atmo-button:focus-visible,.atmo-options button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -58,7 +69,9 @@ body.fx-on #theme-toggle{display:none}
 .atmo-panel .wide-button{margin-top:14px;width:100%}
 .atmo-note{margin:11px 0 0;font-size:11.5px;line-height:1.45;color:var(--muted)}
 @media(max-width:600px){
-  .atmo-button{top:96px;left:max(8px,env(safe-area-inset-left));height:32px;font-size:14px}
+  .atmo-bar{top:96px;left:max(8px,env(safe-area-inset-left))}
+  .atmo-button{height:32px;font-size:14px}
+  .sound-button{width:32px;height:32px}
   .atmo-panel{top:134px;left:max(8px,env(safe-area-inset-left));width:calc(100% - 16px);padding:14px 12px 12px}
   .atmo-options button{font-size:13px;height:38px}
 }

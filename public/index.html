@@ -7,8 +7,8 @@
   <meta name="description" content="Toshkent, kaftingizda. Butun Toshkentning izometrik xaritasi: Chilonzor, Yunusobod, Sergeli, Yangihayot, Bektemir va barcha tumanlar.">
   <title>tiny tashkent — Toshkent, kaftingizda</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=15">
-  <script type="module" src="./app.js?v=17"></script>
+  <link rel="stylesheet" href="./style.css?v=16">
+  <script type="module" src="./app.js?v=21"></script>
   <script type="module" src="./visitors.js?v=1"></script>
 </head>
 <body>
@@ -31,7 +31,10 @@
       <button id="visitor-retry" hidden type="button" aria-label="Tashrifchilar hisobini qayta yuklash">↻</button>
     </aside>
 
-    <button id="atmo-button" class="atmo-button" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="atmo-panel" title="Vaqt, ob-havo va fasl" hidden><span class="atmo-icon" aria-hidden="true">☀</span><span class="atmo-text">Kun · Quyosh</span><span class="atmo-season">Kuz</span><span class="atmo-caret" aria-hidden="true">▾</span></button>
+    <div id="atmo-bar" class="atmo-bar" hidden>
+      <button id="atmo-button" class="atmo-button" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="atmo-panel" title="Vaqt, ob-havo va fasl"><span class="atmo-icon" aria-hidden="true">☀</span><span class="atmo-text">Kun · Quyosh</span><span class="atmo-season">Kuz</span><span class="atmo-caret" aria-hidden="true">▾</span></button>
+      <button id="sound-button" class="sound-button" type="button" aria-pressed="false" aria-label="Shahar ovozlari" title="Shahar ovozlarini yoqish"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3V9Z"/><path class="sound-waves" d="M15 9h2v6h-2V9Zm3-3h2v12h-2V6Z"/><path class="sound-mute" d="M15 9h2v2h-2V9Zm4 0h2v2h-2V9Zm-2 2h2v2h-2v-2Zm-2 2h2v2h-2v-2Zm4 0h2v2h-2v-2Z"/></svg></button>
+    </div>
     <section id="atmo-panel" class="atmo-panel" role="dialog" aria-label="Vaqt, ob-havo va fasl" hidden>
       <div class="atmo-head"><div><span class="eyebrow">HOZIR TOSHKENTDA <b id="atmo-mode">JONLI</b></span><strong id="atmo-live">—</strong></div><button id="atmo-close" class="close-button" type="button" aria-label="Yopish">×</button></div>
       <div id="atmo-rows"></div>
