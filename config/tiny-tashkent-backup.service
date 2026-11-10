@@ -1,0 +1,14 @@
+[Unit]
+Description=Back up Tiny Tashkent visitor database
+
+[Service]
+Type=oneshot
+User=tiny-tashkent
+Group=tiny-tashkent
+ExecStart=/usr/bin/node /var/www/tiny-tashkent/current/server/backup.mjs
+Environment=DATABASE_PATH=/var/lib/tiny-tashkent/visitors.sqlite
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/tiny-tashkent

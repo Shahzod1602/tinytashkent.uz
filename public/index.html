@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#1d2433">
+  <meta name="description" content="Toshkent, kaftingizda. Butun Toshkentning izometrik xaritasi: Chilonzor, Yunusobod, Sergeli, Yangihayot, Bektemir va barcha tumanlar.">
+  <title>tiny tashkent — Toshkent, kaftingizda</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css?v=14">
+  <script type="module" src="./app.js?v=15"></script>
+  <script type="module" src="./visitors.js?v=1"></script>
+</head>
+<body>
+  <main id="app">
+    <canvas id="map" tabindex="0" aria-label="Toshkentning izometrik xaritasi. Surish uchun strelka tugmalari, yaqinlashtirish uchun plus, uzoqlashtirish uchun minus."></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <div id="markers" aria-label="Xaritadagi diqqatga sazovor joylar"></div>
+    <header class="creator-credit" aria-label="Sayt muallifi">
+      <span>Created by <strong>Shahzod</strong></span>
+      <nav aria-label="Shahzodning ijtimoiy tarmoqlari">
+        <a id="telegram-profile" href="https://t.me/Shahzodtech" target="_blank" rel="noopener noreferrer" aria-label="Shahzodning Telegram kanali" title="Telegram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.3 3.6-3.1 16c-.2 1.1-.9 1.4-1.8.9l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.4-4.8 8.8-8c.4-.4-.1-.6-.6-.3L6.1 13.5 1.4 12c-1-.3-1-1 .2-1.4L20 3.5c.8-.3 1.6.2 1.3.1Z"/></svg></a>
+        <a id="instagram-profile" href="https://www.instagram.com/shahzod.tech/" target="_blank" rel="noopener noreferrer" aria-label="Shahzodning Instagram profili" title="Instagram"><svg class="instagram-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle class="instagram-dot" cx="17.5" cy="6.7" r="1.1"/></svg></a>
+      </nav>
+    </header>
+
+    <aside class="visitor-badge" aria-label="Xarita tashrifchilari" title="Hisoblagich yoqilgandan beri kirgan noyob brauzerlar. Qayta kirish takror sanalmaydi.">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM1 20v-3a6 6 0 0 1 12 0v3H1Zm14 0v-3a8 8 0 0 0-1-4 5 5 0 0 1 9 3v4h-8Z"/></svg>
+      <span id="visitor-status" role="status" aria-live="polite"><strong id="visitor-count">…</strong> tashrifchi</span>
+      <button id="visitor-retry" hidden type="button" aria-label="Tashrifchilar hisobini qayta yuklash">↻</button>
+    </aside>
+
+    <header class="brand panel">
+      <a href="./" class="wordmark" aria-label="tiny tashkent bosh sahifasi"><span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i></span>tiny<span>tashkent</span><b>®</b></a>
+      <div class="brand-bottom"><span>KATTA SHAHAR. KICHIK DETALLAR.</span><span class="live-dot"></span></div>
+    </header>
+    <nav class="bottom-actions" aria-label="Asosiy boshqaruv">
+      <button id="share-button" class="pixel-button share-button" aria-label="Ulashish">SHARE</button>
+      <button id="settings-button" class="pixel-button icon-button" aria-label="Xarita sozlamalari" title="Sozlamalar"><svg class="pixel-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M9 1h6v4h3V3h3v3h-2v3h4v6h-4v3h2v3h-3v-2h-3v4H9v-4H6v2H3v-3h2v-3H1V9h4V6H3V3h3v2h3V1Zm0 8v6h6V9H9Z"/></svg></button>
+      <button id="about-button" class="pixel-button icon-button help-button" aria-label="Yordam va loyiha haqida" title="Yordam">?</button>
+    </nav>
+
+    <div class="area-caption"><span class="coordinate-line">41°18′40″N &nbsp; 69°16′47″E</span><h1>Toshkent,<br>kaftingizda.</h1><p>Tanish ko‘chalar. Yangicha nigoh.</p><span class="edition"><i></i> BUTUN TOSHKENT · 10-NASHR</span></div>
+
+    <section class="explore panel" aria-label="Joylarni qidirish">
+      <div class="search-wrap"><svg class="pixel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 1h8v2H5V1ZM3 3h2v2H3V3ZM1 5h2v8H1V5Zm2 8h2v2H3v-2Zm2 2h8v2H5v-2Zm8-12h2v2h-2V3Zm2 2h2v8h-2V5Zm-2 8h2v2h-2v-2Zm2 2h3v3h-3v-3Zm3 3h3v3h-3v-3Z"/></svg><input id="search" placeholder="Joy, ko‘cha, metro yoki tuman qidiring..." autocomplete="off" aria-label="Joy nomini qidiring" aria-controls="results" aria-expanded="false" role="combobox"><kbd>/</kbd><button id="clear-search" aria-label="Qidiruvni tozalash" hidden>×</button></div>
+      <div id="results" role="listbox" hidden></div>
+      <div class="discover-head"><span>BUGUN QAYERGA BORAMIZ?</span><span id="place-count">JOY TANLANG</span></div>
+      <div class="place-chips"><button data-district="Chilonzor">Chilonzor <span>↗</span></button><button data-district="Yunusobod">Yunusobod <span>↗</span></button><button data-district="Sergeli">Sergeli <span>↗</span></button><button id="all-places">Barcha hududlar <span>+</span></button></div>
+      <div class="explore-foot"><span class="tiny-spark">✳</span><span id="current-area">Butun Toshkent. Tumaningizni tanlang.</span></div>
+    </section>
+
+    <aside id="place-card" class="place-card panel" hidden aria-label="Tanlangan joy">
+      <button class="close-button" id="close-place" aria-label="Joy kartasini yopish">×</button>
+      <div class="place-illustration"><canvas id="place-canvas" width="660" height="320"></canvas><span id="place-category"></span></div>
+      <div class="place-content"><span class="eyebrow" id="place-number"></span><h2 id="place-name"></h2><p id="place-description"></p><div class="place-card-footer"><span id="place-coordinate"></span><a id="osm-link" target="_blank" rel="noopener noreferrer" aria-label="OpenStreetMap xaritasida ochish">Xaritada ochish ↗</a></div></div>
+    </aside>
+
+    <aside class="minimap" aria-label="Toshkentning umumiy xaritasi"><canvas id="minimap" width="320" height="220" aria-label="Umumiy xarita. Joyga bosib asosiy xaritani siljiting."></canvas></aside>
+
+    <output id="scale-bar" hidden></output>
+    <div class="gesture-hint" id="gesture-hint"><span>↔</span> Surib ko‘ring <i></i><span>Ctrl / ⌘</span> + scroll — zoom</div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="loading"><div class="loading-mark">tiny<span>tashkent</span><i></i></div><div class="loading-bar"><b></b></div><p>Toshkentning keng xaritasini yuklayapmiz...</p></div>
+
+    <dialog id="about-dialog" aria-labelledby="about-title"><button class="close-button" id="close-about" aria-label="Yopish">×</button><span class="eyebrow">TINY TASHKENT · 10-NASHR</span><h2 id="about-title">Toshkentni<br>kashf eting.</h2><p>Xaritani sichqoncha yoki barmoq bilan suring. Ikki barmoq bilan yoki Ctrl / ⌘ + scroll orqali yaqinlashtiring. Pastdagi qidiruvdan ko‘cha, joy, tuman yoki metro toping. Nomni lotin yoki kirill yozuvida yozishingiz mumkin. SHARE siz ko‘rayotgan manzara havolasini ulashadi. Tishli belgi orqali xarita ko‘rinishini sozlang.</p><div class="about-facts"><div><strong>Haqiqiy</strong><span>ko‘cha va bino konturlari</span></div><div><strong>Izometrik</strong><span>badiiy xarita</span></div><div><strong id="about-place-count">Barcha</strong><span>shahar tumanlari</span></div></div><h3>Tashriflar hisobi</h3><p>Hisoblagich ishga tushganidan beri kirgan noyob brauzerlar sanaladi. Shu brauzerdan qayta kirish takror sanalmaydi. Turli qurilmalar va o‘chirilgan brauzer ma’lumotlari hisobga ta’sir qilishi mumkin. Hisob uchun IP manzil yoki elektron pochta saqlanmaydi.</p><h3>Xarita haqida</h3><p>O‘ninchi nashr Toshkent shahrining barcha tumanlarini qamrab oladi — Chilonzor, Yunusobod, Sergeli, Yangihayot, Bektemir va Yangi Toshkent ham xaritada. Tuman nomini qidiring yoki uning xaritadagi yozuviga bosing. Shahar va yon-atrofi bilan xarita qamrovi: <span id="map-area">—</span>. <span id="metro-count">—</span> ta metro stansiyasini ham qidirishingiz mumkin. Panjarali fasadlar, balkonlar, shisha binolar va moviy gumbazlarni yaqinlashtirib ko‘ring. Geografiya OpenStreetMap ma’lumotlariga asoslangan. Mavjud balandlik va tom ma’lumotlari hisobga olingan. Yetishmaydigan balandliklar, fasadlar, daraxtlar va ranglar badiiy talqin qilingan.</p><div class="keyboard-help"><span><kbd>↑ ↓ ← →</kbd> Surish</span><span><kbd>+ −</kbd> Masshtab</span><span><kbd>/</kbd> Qidiruv</span><span><kbd>Esc</kbd> Yopish</span></div><p class="credits">tiny.london loyihasidan ilhomlangan. Geografik ma’lumotlar: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap ishtirokchilari, ODbL</a>. <a href="./data/tashkent.osm.geojson.gz" download>Asosiy xarita ma’lumotlarini yuklab olish (GeoJSON)</a>.</p><button class="wide-button" id="start-exploring">Toshkentni kashf etish <span>↗</span></button></dialog>
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+      <button class="close-button" id="close-settings" aria-label="Sozlamalarni yopish">×</button>
+      <span class="eyebrow">TINY TASHKENT</span><h2 id="settings-title">Xarita<br>sozlamalari.</h2>
+      <div class="settings-list">
+        <button id="labels-toggle" class="setting-toggle" aria-pressed="true"><span>Joy nomlari</span><span class="toggle-track" aria-hidden="true"></span></button>
+        <button id="metro-toggle" class="setting-toggle" aria-pressed="false"><span>Metro stansiyalari</span><span class="toggle-track" aria-hidden="true"></span></button>
+        <button id="theme-toggle" class="setting-toggle" aria-pressed="false"><span>Oqshom ko‘rinishi</span><span class="toggle-track" aria-hidden="true"></span></button>
+      </div>
+      <div class="settings-zoom"><span>Masshtab</span><div class="zoom-controls"><button id="zoom-out" aria-label="Uzoqlashtirish">−</button><output id="zoom-value" aria-label="Masshtab">100%</output><button id="zoom-in" aria-label="Yaqinlashtirish">+</button></div></div>
+      <div class="settings-navigation"><button id="home-button" class="wide-button">Markazga qaytish <span>↗</span></button><button id="fit-button" class="wide-button">Butun xarita <span>↗</span></button></div>
+      <p class="settings-note">Xaritani suring. Ikki barmoq bilan yoki Ctrl / ⌘ + scroll orqali yaqinlashtiring.</p>
+    </dialog>
+    <dialog id="share-dialog" aria-labelledby="share-title"><button class="close-button" id="close-share" aria-label="Yopish">×</button><span class="eyebrow">BIR BO‘LAK TOSHKENT</span><h2 id="share-title">Shu manzarani<br>ulashing.</h2><p>Havola aynan siz ko‘rib turgan joyni ochadi.</p><label for="share-url">XARITA HAVOLASI</label><div class="copy-row"><input id="share-url" readonly><button id="copy-link">Nusxalash</button></div><button id="download-map" class="wide-button">Manzarani rasm qilib saqlash <span>↓</span></button></dialog>
+  </main>
+</body>
+</html>

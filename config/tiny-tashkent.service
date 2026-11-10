@@ -1,0 +1,30 @@
+[Unit]
+Description=Tiny Tashkent visitor counter
+After=network.target
+
+[Service]
+Type=simple
+User=tiny-tashkent
+Group=tiny-tashkent
+WorkingDirectory=/var/www/tiny-tashkent/current/server
+Environment=NODE_ENV=production
+Environment=PORT=3040
+Environment=DATABASE_PATH=/var/lib/tiny-tashkent/visitors.sqlite
+Environment=ALLOWED_HOSTS=tinytashkent.uz,www.tinytashkent.uz
+ExecStart=/usr/bin/node /var/www/tiny-tashkent/current/server/server.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+StateDirectory=tiny-tashkent
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/tiny-tashkent
+MemoryMax=128M
+TasksMax=32
+
+[Install]
+WantedBy=multi-user.target
