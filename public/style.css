@@ -29,6 +29,7 @@ dialog{color:var(--paper);background:var(--surface);border:var(--edge);box-shado
 
 /* --- live atmosphere --- */
 #fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#map.native,#fx.native{image-rendering:pixelated}
 #fx[hidden]{display:none}
 body.fx-on #theme-toggle{display:none}
 .setting-toggle small{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-weight:400}

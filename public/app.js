@@ -66,11 +66,18 @@ function draw(time){
   const started=profile?performance.now():0;
   frame=0;if(!scene)return;
   const nextFrame=navigation.step(time),moving=navigation.moving||!!animation;
-  const density=Math.min(devicePixelRatio||1,moving?1.5:2);
+  // Zoomed in, one art pixel covers several screen pixels. Painting and lighting
+  // every screen pixel would repeat the same work 4-16 times, so the map is drawn
+  // at the art's own resolution and the browser enlarges it with hard edges.
+  // While a gesture is running the size moves in coarse steps, so the canvases are
+  // not reallocated on every frame of a zoom.
+  const art=artScale(),native=camera.z>=art,exact=art/camera.z;
+  const density=native?(moving?Math.min(1,Math.ceil(exact*8)/8):exact):Math.min(devicePixelRatio||1,moving?1.5:2);
+  if(canvas.classList.contains('native')!==native){canvas.classList.toggle('native',native);$('#fx')?.classList.toggle('native',native);}
   if(canvas.width!==Math.round(w*density)||canvas.height!==Math.round(h*density)){canvas.width=Math.round(w*density);canvas.height=Math.round(h*density);}dpr=density;
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=dimmed()?'#293d3c':'#819461';ctx.fillRect(0,0,w,h);
   // Pixel art: enlarge with hard edges, only smooth when shrinking.
-  ctx.imageSmoothingEnabled=camera.z<artScale();ctx.imageSmoothingQuality='medium';
+  ctx.imageSmoothingEnabled=camera.z<art*.72;ctx.imageSmoothingQuality='medium';
   tileMap.paint(ctx,camera,w,h,true,{moving});
   if(camera.z<.2&&cityPath){
     ctx.save();ctx.translate(w/2-camera.x*camera.z,h/2-camera.y*camera.z);ctx.scale(camera.z,camera.z);ctx.strokeStyle='#586e5499';ctx.lineWidth=1.2/camera.z;ctx.setLineDash([4/camera.z,4/camera.z]);ctx.stroke(cityPath);
