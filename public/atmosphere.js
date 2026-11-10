@@ -8,9 +8,9 @@ const WEATHER_KEY = 'tiny-tashkent:weather:v1';
 const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=41.3111&longitude=69.2797&current=temperature_2m,weather_code,snow_depth&daily=sunrise,sunset&timezone=Asia%2FTashkent&forecast_days=1';
 
 export const GROUPS = {
-  time: {label: 'VAQT', options: [['auto','Avto'],['dawn','Tong'],['day','Kun'],['golden','Oqshom'],['night','Tun']]},
-  weather: {label: 'OB-HAVO', options: [['auto','Avto'],['clear','Quyosh'],['cloudy','Bulut'],['rain','Yomg‘ir'],['snow','Qor']]},
-  season: {label: 'FASL', options: [['auto','Avto'],['spring','Bahor'],['summer','Yoz'],['autumn','Kuz'],['winter','Qish']]},
+  time: {label: 'TIME', options: [['auto','Auto'],['dawn','Dawn'],['day','Day'],['golden','Evening'],['night','Night']]},
+  weather: {label: 'WEATHER', options: [['auto','Auto'],['clear','Sunny'],['cloudy','Cloudy'],['rain','Rain'],['snow','Snow']]},
+  season: {label: 'SEASON', options: [['auto','Auto'],['spring','Spring'],['summer','Summer'],['autumn','Autumn'],['winter','Winter']]},
 };
 const valid = (group, value) => GROUPS[group].options.some(([id]) => id === value);
 
@@ -40,7 +40,7 @@ const SEASONS = {
 };
 // Approximate Tashkent sunrise/sunset (local hours) per month, used until live data arrives.
 const SUN_TABLE = [[7.8,17.2],[7.4,17.9],[6.6,18.5],[5.8,19.0],[5.1,19.6],[4.9,20.0],[5.1,19.9],[5.6,19.3],[6.1,18.5],[6.6,17.7],[7.2,17.1],[7.7,16.9]];
-const WEATHER_NAMES = {clear:'ochiq havo', partly:'biroz bulutli', cloudy:'bulutli', fog:'tuman', rain:'yomg‘ir', storm:'momaqaldiroq', snow:'qor'};
+const WEATHER_NAMES = {clear:'clear', partly:'partly cloudy', cloudy:'overcast', fog:'fog', rain:'rain', storm:'thunderstorm', snow:'snow'};
 const ICONS = {dawn:'☀', day:'☀', golden:'☀', dusk:'☾', night:'☾', cloudy:'☁', partly:'☁', fog:'☁', rain:'☂', storm:'☂', snow:'❄'};
 
 function tashkentNow(date = new Date()) {
@@ -232,12 +232,12 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
 
   // --- controls ---
   const label = (group, value) => GROUPS[group].options.find(([id]) => id === value)?.[1] ?? value;
-  const TIME_NAMES = {dawn: 'Tong', day: 'Kun', golden: 'Oqshom', dusk: 'Shom', night: 'Tun'};
+  const TIME_NAMES = {dawn: 'Dawn', day: 'Day', golden: 'Evening', dusk: 'Dusk', night: 'Night'};
   function renderButton() {
     if (!button) return;
     const precipitation = ICONS[resolved.weather];
     button.querySelector('.atmo-icon').textContent = precipitation || ICONS[resolved.time] || '☀';
-    const weatherLabel = {clear: 'Quyosh', partly: 'Bulutli', cloudy: 'Bulut', fog: 'Tuman', rain: 'Yomg‘ir', storm: 'Jala', snow: 'Qor'}[resolved.weather];
+    const weatherLabel = {clear: 'Sunny', partly: 'Partly cloudy', cloudy: 'Overcast', fog: 'Fog', rain: 'Rain', storm: 'Storm', snow: 'Snow'}[resolved.weather];
     button.querySelector('.atmo-text').textContent = `${TIME_NAMES[resolved.time]} · ${weatherLabel}`;
     button.querySelector('.atmo-season').textContent = label('season', resolved.season);
   }
@@ -251,7 +251,7 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
     panel.querySelector('#atmo-live').textContent = parts.join(' · ');
     const allAuto = state.time === 'auto' && state.weather === 'auto' && state.season === 'auto';
     panel.querySelector('#atmo-reset').hidden = allAuto;
-    panel.querySelector('#atmo-mode').textContent = allAuto ? 'JONLI' : 'QO‘LDA';
+    panel.querySelector('#atmo-mode').textContent = allAuto ? 'LIVE' : 'MANUAL';
     panel.classList.toggle('manual', !allAuto);
   }
   function build() {
@@ -270,7 +270,7 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
     const open = value => { panel.hidden = !value; button.setAttribute('aria-expanded', String(value)); if (value) renderPanel(); };
     button.addEventListener('click', () => open(panel.hidden));
     panel.querySelector('#atmo-close').addEventListener('click', () => { open(false); button.focus(); });
-    panel.querySelector('#atmo-reset').addEventListener('click', () => { state.time = state.weather = state.season = 'auto'; fromLink = false; persist(); retarget(); renderPanel(); toast('Hozirgi Toshkent: jonli vaqt va ob-havo'); });
+    panel.querySelector('#atmo-reset').addEventListener('click', () => { state.time = state.weather = state.season = 'auto'; fromLink = false; persist(); retarget(); renderPanel(); toast('Live Tashkent: real time and weather'); });
     document.addEventListener('pointerdown', event => { if (!panel.hidden && !event.target.closest('#atmo-panel,#atmo-button')) open(false); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { open(false); button.focus(); } });
   }
@@ -285,11 +285,11 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
     const toggle = document.querySelector('#fx-toggle'); toggle?.setAttribute('aria-pressed', String(value));
     if (value) { dirty = true; retarget(); } else document.body.classList.remove('night');
     onActiveChange?.(value); requestDraw();
-    if (announce) toast(value ? 'Jonli atmosfera yoqildi' : 'Atmosfera o‘chirildi');
+    if (announce) toast(value ? 'Live atmosphere on' : 'Atmosphere off');
   }
   // --- sound: browsers only allow audio after a gesture, so a saved "on" waits for the first tap ---
   const bar = document.querySelector('#atmo-bar'), soundButton = document.querySelector('#sound-button');
-  const showSound = () => { soundButton?.setAttribute('aria-pressed', String(state.sound)); if (soundButton) soundButton.title = state.sound ? 'Ovozni o‘chirish' : 'Shahar ovozlarini yoqish'; };
+  const showSound = () => { soundButton?.setAttribute('aria-pressed', String(state.sound)); if (soundButton) soundButton.title = state.sound ? 'Turn sound off' : 'Turn city sounds on'; };
   function armSound() {
     if (sound.on || !state.sound) return;
     const begin = () => { removeEventListener('pointerdown', begin, true); removeEventListener('keydown', begin, true); if (state.sound && state.enabled) sound.start(); };
@@ -298,15 +298,15 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
   if (soundButton && !sound.supported) soundButton.remove();
   soundButton?.addEventListener('click', () => {
     state.sound = !state.sound; persist(); showSound();
-    if (state.sound) { if (sound.start()) toast('Ovoz yoqildi: ' + soundscape()); else { state.sound = false; showSound(); toast('Bu brauzerda ovoz ishlamadi'); } }
-    else { sound.stop(); toast('Ovoz o‘chirildi'); }
+    if (state.sound) { if (sound.start()) toast('Sound on: ' + soundscape()); else { state.sound = false; showSound(); toast('Sound is not available in this browser'); } }
+    else { sound.stop(); toast('Sound off'); }
   });
   function soundscape() {
-    if (resolved.weather === 'storm') return 'jala va momaqaldiroq';
-    if (resolved.weather === 'rain') return 'yomg‘ir shovqini';
-    if (resolved.weather === 'snow') return 'qorli sokinlik';
-    if (look.night > .6) return resolved.season === 'winter' ? 'tungi shahar' : 'tungi chigirtkalar';
-    return resolved.season === 'winter' ? 'qishki shahar' : 'qushlar va shahar';
+    if (resolved.weather === 'storm') return 'downpour and thunder';
+    if (resolved.weather === 'rain') return 'the sound of rain';
+    if (resolved.weather === 'snow') return 'snowy hush';
+    if (look.night > .6) return resolved.season === 'winter' ? 'the city at night' : 'night crickets';
+    return resolved.season === 'winter' ? 'the winter city' : 'birds and the city';
   }
   showSound(); if (state.enabled) armSound();
   document.querySelector('#fx-toggle')?.addEventListener('click', () => setEnabled(!state.enabled));

@@ -23,9 +23,9 @@ if(typeof document!=='undefined'){
     if(busy||document.visibilityState==='hidden')return;busy=true;retry.hidden=true;
     try{
       const total=await requestVisitorCount({visitorId,register:!registered});registered=true;
-      const count=document.createElement('strong');count.id='visitor-count';count.textContent=new Intl.NumberFormat('uz-UZ').format(total);
-      status.replaceChildren(count,document.createTextNode(' tashrifchi'));badge.dataset.state='ready';
-    }catch{status.textContent='Hisob vaqtincha mavjud emas';badge.dataset.state='error';retry.hidden=false;}
+      const count=document.createElement('strong');count.id='visitor-count';count.textContent=new Intl.NumberFormat('en-US').format(total);
+      status.replaceChildren(count,document.createTextNode(total===1?' visitor':' visitors'));badge.dataset.state='ready';
+    }catch{status.textContent='Count unavailable right now';badge.dataset.state='error';retry.hidden=false;}
     finally{busy=false;}
   };
   retry.addEventListener('click',update);

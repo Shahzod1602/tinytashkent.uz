@@ -3,25 +3,27 @@ import {TileMap} from './tiles.js?v=15';
 import {MapNavigation} from './navigation.js?v=6';
 import {normalizeSearch,searchPlaces} from './search.js?v=1';
 import {readPreferences,savePreferences,parseMapLocation} from './state.js?v=1';
-import {initAtmosphere} from './atmosphere.js?v=11';
+import {initAtmosphere} from './atmosphere.js?v=12';
 const $=s=>document.querySelector(s);
 const places=[
-  {id:'amir',name:'Amir Temur xiyoboni',category:'Xiyobon',icon:'✳',coords:[69.2797551,41.3111759],desc:'Toshkent markazidagi yashil orol. Amir Temur haykali atrofidan shahar ko‘chalari turli yo‘nalishlarga yoyiladi.',keywords:'skver square amir temur park'},
-  {id:'hotel',name:'O‘zbekiston mehmonxonasi',category:'Me’morchilik',icon:'▦',coords:[69.2827166,41.3114062],desc:'Xiyobon ro‘parasidagi tanish siluet. Mehmonxonaning naqshli fasadi Toshkent me’morchiligining o‘ziga xos belgilaridan biri.',keywords:'uzbekistan hotel otel ozbekiston uzbekiston'},
-  {id:'museum',name:'Temuriylar tarixi muzeyi',category:'Muzey',icon:'◉',coords:[69.2789838,41.3136702],desc:'Moviy gumbaz, yumaloq bino va yashil bog‘. Temuriylar davri tarixiga bag‘ishlangan muzeyni yuqoridan ham darhol tanish mumkin.',keywords:'amir temur museum muzey'},
-  {id:'navoi',name:'Navoiy teatri',category:'Madaniyat',icon:'♜',coords:[69.2713076,41.3092707],desc:'Alisher Navoiy nomidagi opera va balet teatri. Teatr maydoni, favvoralar va atrofdagi sayr yo‘laklarini kashf eting.',keywords:'alisher navoiy navoi opera ballet teatr theatre'},
-  {id:'independence',name:'Mustaqillik maydoni',category:'Maydon',icon:'⚑',coords:[69.2674378,41.3153897],desc:'Keng maydonlar va daraxtzorlar orasidagi shahar timsoli. Bu yerdan Toshkent markazining yashil yo‘laklari bo‘ylab sayr boshlanadi.',keywords:'mustaqillik independence square maydon'},
-  {id:'broadway',name:'Sayilgoh ko‘chasi',category:'Sayr',icon:'↝',coords:[69.275188,41.311674],desc:'Toshkentliklar “Broadway” deb ataydigan sayr ko‘chasi. Amir Temur xiyobonidan shaharning boshqa tanish manzillariga olib boradi.',keywords:'broadway sayilgoh street walking kocha'},
-  {id:'forum',name:'Forumlar saroyi',category:'Me’morchilik',icon:'▥',coords:[69.282680,41.309565],desc:'Xiyobon janubidagi och rangli, katta hajmli saroy. Uning atrofidagi ochiq maydon va geometrik yo‘laklar xaritada yaqqol ko‘rinadi.',keywords:'forum palace saroy anjumanlar'},
-  {id:'clock',name:'Toshkent kurantlari',category:'Shahar ramzi',icon:'◷',coords:[69.280163,41.309262],desc:'Markazning vaqtini belgilab turuvchi tanish soat minorasi. Kichik ko‘rinsa ham, Toshkent manzarasining ajralmas bo‘lagi.',keywords:'clock soat kurant chimes'},
-  {id:'chorsu',name:'Chorsu bozori',category:'Eski shahar',icon:'◉',coords:[69.2351083,41.3267756],desc:'Toshkentning eski shahar qismidagi tanish moviy gumbaz. Bozor atrofidagi mahallalar va tor ko‘chalarni yuqoridan kashf eting.',keywords:'chorsu chor su bazaar bazar bozor market eski shahar чорсу'},
-  {id:'tashkent-city',name:'Tashkent City',category:'Bog‘ va me’morchilik',icon:'▥',coords:[69.2483999,41.3165315],desc:'Zamonaviy binolar orasidagi sayilgoh, ko‘l va yo‘laklar. Markazdan g‘arbga qarab xaritani surib, shaharning yangi qiyofasiga yetib boring.',keywords:'tashkent city park siti toshkent сити'},
-  {id:'magic-city',name:'Magic City',category:'Sayr va hordiq',icon:'♜',coords:[69.2450584,41.3036218],desc:'Shaharning janubi-g‘arb tomonidagi sayr va ko‘ngilochar hudud. Atrofdagi bog‘lar, suv yo‘llari va ko‘chalar ham kengaytirilgan xaritaga kirdi.',keywords:'magic city magiccity mejik siti park мэжик'},
-  {id:'minor',name:'Minor masjidi',category:'Me’morchilik',icon:'◉',coords:[69.2751989,41.3354619],desc:'Oq fasadlar va moviy gumbaz. Anhor yaqinidagi masjid va uning atrofini izometrik ko‘rinishda tomosha qiling.',keywords:'minor mosque masjid oq масжид минор'},
-  {id:'tower',name:'Toshkent teleminorasi',category:'Shahar ramzi',icon:'↑',coords:[69.2848233,41.345678],desc:'Shahar shimolidagi baland siluet. Teleminora atrofi, ko‘chalar va yashil hududlar endi xaritada ochiq.',keywords:'teleminora television tv tower tashkent toshkent телебашня'},
+  {id:'amir',name:'Amir Temur Square',category:'Park',icon:'✳',coords:[69.2797551,41.3111759],desc:'A green island in the heart of Tashkent. Streets fan out in every direction from the statue of Amir Temur.',keywords:'skver square amir temur park'},
+  {id:'hotel',name:'Hotel Uzbekistan',category:'Architecture',icon:'▦',coords:[69.2827166,41.3114062],desc:'The familiar silhouette across from the square. Its latticed facade is one of the signatures of Tashkent architecture.',keywords:'uzbekistan hotel otel ozbekiston uzbekiston'},
+  {id:'museum',name:'Amir Temur Museum',category:'Museum',icon:'◉',coords:[69.2789838,41.3136702],desc:'A blue dome, a round hall and a green garden. The museum of the Timurid era is unmistakable even from above.',keywords:'amir temur museum muzey'},
+  {id:'navoi',name:'Navoi Theatre',category:'Culture',icon:'♜',coords:[69.2713076,41.3092707],desc:'The Alisher Navoi Opera and Ballet Theatre. Explore the square, the fountains and the promenades around it.',keywords:'alisher navoiy navoi opera ballet teatr theatre'},
+  {id:'independence',name:'Independence Square',category:'Square',icon:'⚑',coords:[69.2674378,41.3153897],desc:'A city symbol among wide plazas and groves. Green walks through the centre of Tashkent start here.',keywords:'mustaqillik independence square maydon'},
+  {id:'broadway',name:'Sayilgoh Street',category:'Promenade',icon:'↝',coords:[69.275188,41.311674],desc:'The promenade locals call “Broadway”. It leads from Amir Temur Square to other familiar corners of the city.',keywords:'broadway sayilgoh street walking kocha'},
+  {id:'forum',name:'Palace of Forums',category:'Architecture',icon:'▥',coords:[69.282680,41.309565],desc:'A large pale palace south of the square. The open plaza and geometric paths around it stand out on the map.',keywords:'forum palace saroy anjumanlar'},
+  {id:'clock',name:'Tashkent Chimes',category:'City symbol',icon:'◷',coords:[69.280163,41.309262],desc:'The familiar clock tower that keeps time for the centre. Small on the map, but part of the Tashkent skyline.',keywords:'clock soat kurant chimes'},
+  {id:'chorsu',name:'Chorsu Bazaar',category:'Old city',icon:'◉',coords:[69.2351083,41.3267756],desc:'The famous blue dome in the old part of Tashkent. Explore the mahallas and narrow lanes around the bazaar from above.',keywords:'chorsu chor su bazaar bazar bozor market eski shahar чорсу'},
+  {id:'tashkent-city',name:'Tashkent City',category:'Park and architecture',icon:'▥',coords:[69.2483999,41.3165315],desc:'A promenade, a lake and paths between modern towers. Pan west from the centre to reach the city’s new face.',keywords:'tashkent city park siti toshkent сити'},
+  {id:'magic-city',name:'Magic City',category:'Leisure',icon:'♜',coords:[69.2450584,41.3036218],desc:'A promenade and amusement quarter in the south-west. The parks, canals and streets around it are on the map too.',keywords:'magic city magiccity mejik siti park мэжик'},
+  {id:'minor',name:'Minor Mosque',category:'Architecture',icon:'◉',coords:[69.2751989,41.3354619],desc:'White facades and a blue dome. See the mosque by the Anhor canal and its surroundings in isometric view.',keywords:'minor mosque masjid oq масжид минор'},
+  {id:'tower',name:'Tashkent TV Tower',category:'City symbol',icon:'↑',coords:[69.2848233,41.345678],desc:'The tall silhouette in the north of the city. The tower, the streets and the greenery around it are all on the map.',keywords:'teleminora television tv tower tashkent toshkent телебашня'},
 ];
 const metroPlaces=[],districtPlaces=[],cityRings=[];let catalogPlaces=[],catalogPromise=null,catalogState='idle',restoreSequence=0;
 const catalogIndex=new Map();
+// The search catalogue stores Uzbek category names; its search keys stay as they are.
+const CATEGORY_EN={'Ko‘cha':'Street','Joy':'Place','Yodgorlik':'Monument','Ibodatxona':'Place of worship','Ovqatlanish':'Food','Ta’lim':'Education','Tibbiyot':'Health','Bog‘':'Park','Muzey':'Museum'};
 const allPlaces=()=>[...districtPlaces,...places,...metroPlaces,...catalogPlaces];
 const findPlace=id=>catalogIndex.get(id)||[...districtPlaces,...places,...metroPlaces].find(p=>p.id===id);
 let showMetro=false;
@@ -84,7 +86,7 @@ function draw(time){
     el.style.transform=`translate3d(${x}px,${y-9*camera.z}px,0) translate(-50%,-100%)`;
     p.label??=el.querySelector('.marker-label');p.label.hidden=!p.district&&camera.z<.55&&p.id!==selected;
     if(p.district&&!el.hidden&&labels&&w<1100){
-      const labelWidth=p.name.replace(/ tumani$/,'').length*(w<760?4.7:6.3)+24,labelHeight=w<760?24:34;
+      const labelWidth=p.name.replace(/ district$/,'').length*(w<760?4.7:6.3)+24,labelHeight=w<760?24:34;
       const box=[x-labelWidth/2,y-labelHeight,x+labelWidth/2,y+4];
       if(occupied.some(b=>box[0]<b[2]+3&&box[2]>b[0]-3&&box[1]<b[3]+3&&box[3]>b[1]-3))el.hidden=true;
       else occupied.push(box);
@@ -114,7 +116,7 @@ function drawMini(){
   mc.fillStyle='#ffffff20';mc.fillRect(rx,ry,rw,rh);mc.strokeStyle='#1d2433';mc.lineWidth=5;mc.strokeRect(rx,ry,rw,rh);mc.strokeStyle='#f5f1e3';mc.lineWidth=2;mc.strokeRect(rx,ry,rw,rh);
 }
 function cancelInteractions(){navigation.cancel();cancelAnimationFrame(animation);animation=0;canvas.classList.remove('dragging');inputRect=null;}
-function resize(){cancelInteractions();w=innerWidth;h=innerHeight;$('#search').placeholder=w<600?'Joy, metro yoki ko‘cha...':'Joy, ko‘cha, metro yoki tuman qidiring...';clampCamera();requestDraw();}
+function resize(){cancelInteractions();w=innerWidth;h=innerHeight;$('#search').placeholder=w<600?'Place, metro or street...':'Search a place, street, metro or district...';clampCamera();requestDraw();}
 function animateTo(x,y,z){
   navigation.stop();cancelAnimationFrame(animation);
   const from={...camera},start=performance.now(),duration=matchMedia('(prefers-reduced-motion: reduce)').matches?0:700;
@@ -130,7 +132,7 @@ function selectPlace(id,move=true){
   const p=findPlace(id);if(!p)return;
   if(p.district){
     closePlace();selected=id;$('.area-caption').style.opacity='0';$('#search').value='';$('#clear-search').hidden=true;closeResults();
-    markerNodes.get(id).classList.add('selected');$('#current-area').textContent=p.name+' · Yaqinlashtirib kashf eting.';
+    markerNodes.get(id).classList.add('selected');$('#current-area').textContent=p.name+' · Zoom in and explore.';
     if(move){const view=fitBounds(p.bounds);animateTo(view.x,view.y,view.z);}else{requestDraw();savePosition();}
     return;
   }
@@ -144,8 +146,8 @@ function selectPlace(id,move=true){
   if(p.metro){showMetro=true;$('#metro-toggle').setAttribute('aria-pressed','true');rememberPreferences();}
   for(const [key,el]of markerNodes)el.classList.toggle('selected',key===id);
   $('#place-name').textContent=p.name;$('#place-category').textContent=p.category;
-  $('#place-number').textContent=p.catalog?'KO‘CHALAR VA JOYLAR':p.metro?'TOSHKENT METROSI':`TOSHKENTNI KASHF ETING · ${String(places.indexOf(p)+1).padStart(2,'0')} / ${places.length}`;
-  $('#place-description').textContent=p.desc||(p.street?'Ko‘cha va uning atrofidagi mahallalarni xaritada kashf eting.':'Bu joy va uning atrofini yaqinlashtirib tomosha qiling.');$('#place-coordinate').textContent=`${p.coords[1].toFixed(4)}° N, ${p.coords[0].toFixed(4)}° E`;
+  $('#place-number').textContent=p.catalog?'STREETS AND PLACES':p.metro?'TASHKENT METRO':`EXPLORE TASHKENT · ${String(places.indexOf(p)+1).padStart(2,'0')} / ${places.length}`;
+  $('#place-description').textContent=p.desc||(p.street?'Explore this street and the neighbourhoods around it on the map.':'Zoom in to see this place and its surroundings.');$('#place-coordinate').textContent=`${p.coords[1].toFixed(4)}° N, ${p.coords[0].toFixed(4)}° E`;
   $('#osm-link').href=`https://www.openstreetmap.org/?mlat=${p.coords[1]}&mlon=${p.coords[0]}#map=18/${p.coords[1]}/${p.coords[0]}`;
   $('#place-card').hidden=false;$('.area-caption').style.opacity='0';$('#search').value='';$('#clear-search').hidden=true;closeResults();
   if(scene){
@@ -158,7 +160,7 @@ function selectPlace(id,move=true){
   else{requestDraw();savePosition();}
 }
 function removeCatalogMarker(id){if(catalogIndex.has(id)){markerNodes.get(id)?.remove();markerNodes.delete(id);}}
-function closePlace(save=true){removeCatalogMarker(selected);selected=null;$('#place-card').hidden=true;$('.area-caption').style.opacity='1';$('#current-area').textContent='Butun Toshkent. Tumaningizni tanlang.';for(const el of markerNodes.values())el.classList.remove('selected');if(save)savePosition();}
+function closePlace(save=true){removeCatalogMarker(selected);selected=null;$('#place-card').hidden=true;$('.area-caption').style.opacity='1';$('#current-area').textContent='All of Tashkent. Pick your district.';for(const el of markerNodes.values())el.classList.remove('selected');if(save)savePosition();}
 function fitBounds([west,south,east,north]){
   const points=[[west,south],[east,south],[east,north],[west,north]].map(project);
   const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),left=Math.min(...xs),right=Math.max(...xs),top=Math.min(...ys),bottom=Math.max(...ys);
@@ -171,7 +173,7 @@ async function loadSearchCatalog(){
   if(catalogState==='ready')return catalogPlaces;if(catalogPromise)return catalogPromise;
   catalogState='loading';
   catalogPromise=fetch('./data/search.json?v=1').then(r=>{if(!r.ok)throw new Error('Search catalog unavailable');return r.json();}).then(data=>{
-    catalogPlaces=data.places.map(p=>({...p,catalog:true,icon:p.street?'↝':p.category==='Bog‘'?'✳':'◇'}));
+    catalogPlaces=data.places.map(p=>({...p,catalog:true,icon:p.street?'↝':p.category==='Bog‘'?'✳':'◇',category:CATEGORY_EN[p.category]||p.category}));
     for(const p of catalogPlaces)catalogIndex.set(p.id,p);catalogState='ready';return catalogPlaces;
   }).catch(()=>{catalogState='error';catalogPromise=null;return [];}).finally(()=>{if(document.activeElement===$('#search'))showResults(false,false);});
   return catalogPromise;
@@ -180,11 +182,11 @@ function showResults(all=false,allowLoad=true){
   if(allowLoad)void loadSearchCatalog();
   const q=normalize($('#search').value.trim());filtered=searchPlaces(q||all?allPlaces():[...districtPlaces,...places],q);activeResult=-1;
   $('#results').innerHTML='';
-  if(!filtered.length){const n=document.createElement('p');n.className='no-results';n.textContent=catalogState==='loading'?'Ko‘chalar va joylar yuklanmoqda...':catalogState==='error'?'Ko‘cha katalogi yuklanmadi. Qayta qidirib ko‘ring.':'Bu nom topilmadi. Joy yoki ko‘cha nomini boshqa yozilishda qidirib ko‘ring.';$('#results').append(n);}
+  if(!filtered.length){const n=document.createElement('p');n.className='no-results';n.textContent=catalogState==='loading'?'Loading streets and places...':catalogState==='error'?'The street catalogue did not load. Try searching again.':'Nothing found. Try another spelling of the place or street.';$('#results').append(n);}
   for(const p of filtered){
     const b=document.createElement('button');b.id=`result-${p.id}`;b.setAttribute('role','option');b.setAttribute('aria-selected','false');
     const icon=document.createElement('span');icon.className='result-icon';icon.textContent=p.icon;
-    const text=document.createElement('span'),name=document.createElement('strong'),small=document.createElement('small');text.className='result-copy';name.textContent=p.name;small.textContent=p.category+' · Toshkent';text.append(name,small);
+    const text=document.createElement('span'),name=document.createElement('strong'),small=document.createElement('small');text.className='result-copy';name.textContent=p.name;small.textContent=p.category+' · Tashkent';text.append(name,small);
     const arrow=document.createElement('span');arrow.className='result-arrow';arrow.textContent='↗';b.append(icon,text,arrow);
     b.addEventListener('click',()=>{selectPlace(p.id);$('#search').blur();});$('#results').append(b);
   }
@@ -227,7 +229,7 @@ $('#zoom-in').onclick=()=>changeZoom(1.28);$('#zoom-out').onclick=()=>changeZoom
 $('#fit-button').onclick=()=>{$('#settings-dialog').close();closePlace();animateTo(WIDTH/2,HEIGHT/2,Math.min(w/WIDTH,h/HEIGHT)*.86);};
 $('#labels-toggle').onclick=()=>{labels=!labels;$('#markers').classList.toggle('labels-hidden',!labels);$('#labels-toggle').setAttribute('aria-pressed',String(labels));rememberPreferences();};
 $('#metro-toggle').onclick=()=>{showMetro=!showMetro;$('#metro-toggle').setAttribute('aria-pressed',String(showMetro));rememberPreferences();requestDraw();};
-$('#theme-toggle').onclick=()=>{night=!night;if(!atmo?.active)document.body.classList.toggle('night',night);$('#theme-toggle').setAttribute('aria-pressed',String(night));rememberPreferences();requestDraw();toast(night?'Toshkent oqshomi':'Quyoshli Toshkent');};
+$('#theme-toggle').onclick=()=>{night=!night;if(!atmo?.active)document.body.classList.toggle('night',night);$('#theme-toggle').setAttribute('aria-pressed',String(night));rememberPreferences();requestDraw();toast(night?'Tashkent evening':'Sunny Tashkent');};
 $('#search').addEventListener('input',()=>showResults());$('#search').addEventListener('focus',()=>showResults());
 $('#search').addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeResults();$('#search').blur();return;}
@@ -245,18 +247,18 @@ for(const name of ['about','share','settings']){
   $(`#${name}-dialog`).addEventListener('click',e=>{if(e.target===e.currentTarget){const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.currentTarget.close();}});
 }
 $('#start-exploring').onclick=()=>$('#about-dialog').close();
-$('#copy-link').onclick=async()=>{try{await navigator.clipboard.writeText($('#share-url').value);$('#copy-link').textContent='Nusxalandi ✓';toast('Xarita havolasi nusxalandi');setTimeout(()=>$('#copy-link').textContent='Nusxalash',2200);}catch{$('#share-url').select();toast('Havolani belgiladik. Nusxalash uchun Ctrl/Cmd+C bosing.');}};
+$('#copy-link').onclick=async()=>{try{await navigator.clipboard.writeText($('#share-url').value);$('#copy-link').textContent='Copied ✓';toast('Map link copied');setTimeout(()=>$('#copy-link').textContent='Copy',2200);}catch{$('#share-url').select();toast('Link selected. Press Ctrl/Cmd+C to copy it.');}};
 $('#download-map').onclick=async()=>{
   if(!scene)return;
   const out=document.createElement('canvas');out.width=1600;out.height=1000;const c=out.getContext('2d'),view={...camera,z:1600/w*camera.z};
   const button=$('#download-map');button.disabled=true;
   let release=()=>{};
-  try{release=await tileMap.ensure(view,1600,1000);}catch{toast('Ayrim detallar yuklanmadi. Rasm mavjud sifatda saqlanadi.');}finally{button.disabled=false;}
+  try{release=await tileMap.ensure(view,1600,1000);}catch{toast('Some detail did not load. The image is saved at the available quality.');}finally{button.disabled=false;}
   c.fillStyle='#819461';c.fillRect(0,0,1600,1000);try{tileMap.paint(c,view,1600,1000,false);}finally{release();}
   if(dimmed()){c.globalCompositeOperation='multiply';c.fillStyle='#596b8f';c.fillRect(0,0,1600,1000);c.globalCompositeOperation='source-over';}
   const lit=atmo?.active?atmo.still(out,view,1600,1000):null;if(lit)c.drawImage(lit,0,0);
-  c.fillStyle='#1d2433';c.fillRect(0,905,1600,95);c.fillStyle='#eeeade';c.font='600 30px "Pixelify Sans", monospace';c.fillText('tiny tashkent',42,958);c.font='15px "DM Sans", sans-serif';c.fillStyle='#bfc6c8';c.fillText('Toshkent, kaftingizda.',290,958);c.font='12px sans-serif';c.textAlign='right';c.fillText('© OpenStreetMap contributors · Binolar badiiy talqinda',1558,958);
-  out.toBlob(blob=>{if(!blob){toast('Rasmni tayyorlab bo‘lmadi. Qayta urinib ko‘ring.');return;}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='tiny-tashkent.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);toast('Rasm yuklab olishga tayyorlandi');},'image/png');
+  c.fillStyle='#1d2433';c.fillRect(0,905,1600,95);c.fillStyle='#eeeade';c.font='600 30px "Pixelify Sans", monospace';c.fillText('tiny tashkent',42,958);c.font='15px "DM Sans", sans-serif';c.fillStyle='#bfc6c8';c.fillText('Tashkent, in your palm.',290,958);c.font='12px sans-serif';c.textAlign='right';c.fillText('© OpenStreetMap contributors · Buildings are an artistic interpretation',1558,958);
+  out.toBlob(blob=>{if(!blob){toast('Could not prepare the image. Please try again.');return;}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='tiny-tashkent.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);toast('Image ready to download');},'image/png');
 };
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.explore'))closeResults();});
 window.addEventListener('keydown',keyboard);window.addEventListener('resize',resize);window.addEventListener('blur',cancelInteractions);
@@ -279,20 +281,20 @@ async function init(){
     for(const polygon of polygons)for(const ring of polygon)cityRings.push(ring.map(project));
     cityPath=new Path2D();for(const ring of cityRings){ring.forEach((p,i)=>i?cityPath.lineTo(...p):cityPath.moveTo(...p));cityPath.closePath();}
     for(const f of districts.features){
-      const name=f.properties.displayName||f.properties.name;
-      const p={id:f.id,name,category:'Tuman',icon:'◇',coords:f.geometry.coordinates,point:project(f.geometry.coordinates),district:true,bounds:f.properties.bounds,keywords:'tuman district rayon '+Object.values(f.properties).join(' ')};
-      districtPlaces.push(p);const b=document.createElement('button');b.className='map-marker district-marker';b.setAttribute('aria-label',name+' xaritasini ochish');
-      const label=document.createElement('span');label.className='marker-label';label.textContent=name.replace(/ tumani$/,'');b.append(label);b.onclick=()=>selectPlace(p.id);$('#markers').append(b);markerNodes.set(p.id,b);
+      const name=(f.properties.displayName||f.properties.name).replace(/ tumani$/,'')+' district';
+      const p={id:f.id,name,category:'District',icon:'◇',coords:f.geometry.coordinates,point:project(f.geometry.coordinates),district:true,bounds:f.properties.bounds,keywords:'tuman district rayon '+Object.values(f.properties).join(' ')};
+      districtPlaces.push(p);const b=document.createElement('button');b.className='map-marker district-marker';b.setAttribute('aria-label','Open '+name);
+      const label=document.createElement('span');label.className='marker-label';label.textContent=name.replace(/ district$/,'');b.append(label);b.onclick=()=>selectPlace(p.id);$('#markers').append(b);markerNodes.set(p.id,b);
     }
     for(const f of data.features.filter(f=>f.kind==='metro'&&f.geometry.type==='Point')){
       const name=f.properties['name:uz']||f.properties.name||f.properties['name:en'];if(!name)continue;
-      const p={id:f.id.replace('/','-'),name:`${name} metrosi`,category:'Metro stansiyasi',icon:'M',coords:f.geometry.coordinates,point:project(f.geometry.coordinates),metro:true,keywords:'metro subway station '+Object.values(f.properties).join(' '),desc:`${name} — Toshkent metrosi stansiyasi. Shu joydan atrofdagi ko‘chalar va diqqatga sazovor manzillarni kashf eting.`};
+      const p={id:f.id.replace('/','-'),name:`${name} metro`,category:'Metro station',icon:'M',coords:f.geometry.coordinates,point:project(f.geometry.coordinates),metro:true,keywords:'metro subway station '+Object.values(f.properties).join(' '),desc:`${name} is a Tashkent Metro station. Explore the streets and sights around it from here.`};
       metroPlaces.push(p);const b=document.createElement('button');b.className='map-marker metro-marker';b.setAttribute('aria-label',p.name);b.hidden=true;
       const label=document.createElement('span');label.className='marker-label';label.textContent=p.name;const pin=document.createElement('span');pin.className='metro-pin';pin.textContent='M';b.append(label,pin);b.onclick=()=>selectPlace(p.id);$('#markers').append(b);markerNodes.set(p.id,b);
     }
     tileMap=await TileMap.load(requestDraw);scene=tileMap.overview;mapStats=tileMap.manifest;ready=true;await restorePosition();requestDraw();$('#loading').classList.add('loaded');setTimeout(()=>$('#loading').hidden=true,600);
-    $('#place-count').textContent=districtPlaces.length+' HUDUD';$('#about-place-count').textContent=districtPlaces.length+' hudud';$('#map-area').textContent=mapStats.areaKm2+' km²';$('#metro-count').textContent=metroPlaces.length;
+    $('#place-count').textContent=districtPlaces.length+' DISTRICTS';$('#about-place-count').textContent=districtPlaces.length;$('#map-area').textContent=mapStats.areaKm2+' km²';$('#metro-count').textContent=metroPlaces.length;
     setTimeout(hideHint,14000);
-  }catch(error){console.error(error);$('#loading p').textContent='Xaritani yuklab bo‘lmadi. Internetni tekshirib, sahifani yangilang.';$('.loading-bar').hidden=true;const b=document.createElement('button');b.className='wide-button';b.style.width='200px';b.textContent='Qayta urinish ↻';b.onclick=()=>location.reload();$('#loading').append(b);}
+  }catch(error){console.error(error);$('#loading p').textContent='The map could not be loaded. Check your connection and refresh the page.';$('.loading-bar').hidden=true;const b=document.createElement('button');b.className='wide-button';b.style.width='200px';b.textContent='Try again ↻';b.onclick=()=>location.reload();$('#loading').append(b);}
 }
 init();
