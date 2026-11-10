@@ -112,6 +112,10 @@ export class TileMap {
   }
   paint(ctx,camera,width,height,request=true,{moving=false}={}){
     const {width:mw,height:mh,maxLevel,detailPixelRatio=1,tileSize}=this.manifest;
+    // Only full-detail pixel art is enlarged with hard edges. The overview and
+    // coarser levels are stand-ins while detail loads: smooth them, or they
+    // show as a mosaic of huge blocks.
+    const crisp=!ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=true;
     this.drawImage(ctx,this.overview,[0,0,mw,mh],camera,width,height);
     const visible=this.visibleTiles(camera,width,height),level=this.levelFor(camera.z),wanted=new Set(visible.map(t=>t.key));
     const missing=visible.some(t=>!this.cache.has(t.key));let displayed=visible;
@@ -128,8 +132,10 @@ export class TileMap {
     for(const tile of displayed){
       const entry=this.cache.get(tile.key);if(!entry)continue;entry.used=++this.clock;
       const ratio=tile.level===0?detailPixelRatio:1;
+      ctx.imageSmoothingEnabled=!(crisp&&tile.level===0);
       this.drawImage(ctx,entry.image,[tile.x*tile.span,tile.y*tile.span,tile.x*tile.span+entry.image.width/ratio*2**tile.level,tile.y*tile.span+entry.image.height/ratio*2**tile.level],camera,width,height);
     }
+    ctx.imageSmoothingEnabled=!crisp;
     const parents=level<maxLevel?this.visibleTiles(camera,width,height,level+1):[];
     if(request){
       const neighbors=moving?[]:this.visibleTiles(camera,width,height,level,1).filter(t=>!wanted.has(t.key)).slice(0,2);

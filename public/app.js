@@ -1,5 +1,5 @@
 import {project,unproject,WIDTH,HEIGHT,MAP_BOUNDS} from './renderer.js?v=11';
-import {TileMap} from './tiles.js?v=16';
+import {TileMap} from './tiles.js?v=17';
 import {MapNavigation} from './navigation.js?v=6';
 import {normalizeSearch,searchPlaces} from './search.js?v=1';
 import {readPreferences,savePreferences,parseMapLocation} from './state.js?v=1';
