@@ -3,7 +3,7 @@ import {TileMap} from './tiles.js?v=14';
 import {MapNavigation} from './navigation.js?v=6';
 import {normalizeSearch,searchPlaces} from './search.js?v=1';
 import {readPreferences,savePreferences,parseMapLocation} from './state.js?v=1';
-import {initAtmosphere} from './atmosphere.js?v=1';
+import {initAtmosphere} from './atmosphere.js?v=2';
 const $=s=>document.querySelector(s);
 const places=[
   {id:'amir',name:'Amir Temur xiyoboni',category:'Xiyobon',icon:'✳',coords:[69.2797551,41.3111759],desc:'Toshkent markazidagi yashil orol. Amir Temur haykali atrofidan shahar ko‘chalari turli yo‘nalishlarga yoyiladi.',keywords:'skver square amir temur park'},

@@ -1,6 +1,6 @@
 // Time of day, weather and seasons for the map. "Avto" follows real Tashkent:
 // local clock, sunrise/sunset, current weather (Open-Meteo, no key) and month.
-import {createFx} from './fx.js?v=1';
+import {createFx} from './fx.js?v=2';
 
 const STORAGE_KEY = 'tiny-tashkent:atmosphere:v1';
 const WEATHER_KEY = 'tiny-tashkent:weather:v1';
@@ -13,21 +13,23 @@ export const GROUPS = {
 };
 const valid = (group, value) => GROUPS[group].options.some(([id]) => id === value);
 
+// lit = share of windows switched on, lamp = street lighting.
 const TIMES = {
-  dawn:   {mul:[1.03,.93,.92], add:[.05,.025,.045], night:0,   sun:.35, warm:.28, mist:.12},
-  day:    {mul:[1,1,1],        add:[0,0,0],         night:0,   sun:1,   warm:0,   mist:0},
-  golden: {mul:[1.08,.95,.80], add:[.025,.0,-.015],  night:0,   sun:.8,  warm:1,   mist:0},
-  dusk:   {mul:[.66,.62,.88],  add:[.02,.0,.045],   night:.5,  sun:0,   warm:.22, mist:.04},
-  night:  {mul:[.28,.33,.52],  add:[0,.005,.03],    night:1,   sun:0,   warm:0,   mist:0},
+  dawn:   {mul:[1.03,.93,.92], add:[.05,.025,.045], night:0,   sun:.35, warm:.28, mist:.10, lit:.24, lamp:.30},
+  day:    {mul:[1,1,1],        add:[0,0,0],         night:0,   sun:1,   warm:0,   mist:0,   lit:0,   lamp:0},
+  golden: {mul:[1.08,.95,.80], add:[.025,.0,-.015], night:.08, sun:.8,  warm:1,   mist:0,   lit:.58, lamp:.45},
+  dusk:   {mul:[.66,.62,.88],  add:[.02,.0,.045],   night:.5,  sun:0,   warm:.22, mist:.03, lit:.88, lamp:1},
+  night:  {mul:[.28,.33,.52],  add:[0,.005,.03],    night:1,   sun:0,   warm:0,   mist:0,   lit:1,   lamp:1},
 };
+// lit here = how many people switch a lamp on because the day is gloomy.
 const WEATHERS = {
-  clear:  {cloud:0,   rain:0, snow:0, wet:0,  fog:0,   cover:0},
-  partly: {cloud:.35, rain:0, snow:0, wet:0,  fog:0,   cover:0},
-  cloudy: {cloud:.85, rain:0, snow:0, wet:0,  fog:.03, cover:0},
-  fog:    {cloud:.6,  rain:0, snow:0, wet:.2, fog:.5,  cover:0},
-  rain:   {cloud:1,   rain:1, snow:0, wet:1,  fog:.12, cover:0},
-  storm:  {cloud:1,   rain:1, snow:0, wet:1,  fog:.14, cover:0},
-  snow:   {cloud:.8,  rain:0, snow:1, wet:0,  fog:.12, cover:1},
+  clear:  {cloud:0,   rain:0, snow:0, wet:0,  fog:0,   cover:0, lit:0},
+  partly: {cloud:.35, rain:0, snow:0, wet:0,  fog:0,   cover:0, lit:.03},
+  cloudy: {cloud:.85, rain:0, snow:0, wet:0,  fog:0,   cover:0, lit:.14},
+  fog:    {cloud:.6,  rain:0, snow:0, wet:.2, fog:.42, cover:0, lit:.30},
+  rain:   {cloud:1,   rain:1, snow:0, wet:1,  fog:.04, cover:0, lit:.24},
+  storm:  {cloud:1,   rain:1, snow:0, wet:1,  fog:.07, cover:0, lit:.38},
+  snow:   {cloud:.8,  rain:0, snow:1, wet:0,  fog:.07, cover:1, lit:.20},
 };
 const SEASONS = {
   spring: {spring:1, autumn:0, bare:0, cover:0},
@@ -57,7 +59,7 @@ export function weatherFromCode(code) {
 }
 const mixNumber = (a, b, t) => a + (b - a) * t;
 function mixTime(a, b, t) {
-  return {mul: a.mul.map((v, i) => mixNumber(v, b.mul[i], t)), add: a.add.map((v, i) => mixNumber(v, b.add[i], t)), night: mixNumber(a.night, b.night, t), sun: mixNumber(a.sun, b.sun, t), warm: mixNumber(a.warm, b.warm, t), mist: mixNumber(a.mist, b.mist, t)};
+  return {mul: a.mul.map((v, i) => mixNumber(v, b.mul[i], t)), add: a.add.map((v, i) => mixNumber(v, b.add[i], t)), night: mixNumber(a.night, b.night, t), lit: mixNumber(a.lit, b.lit, t), lamp: mixNumber(a.lamp, b.lamp, t), sun: mixNumber(a.sun, b.sun, t), warm: mixNumber(a.warm, b.warm, t), mist: mixNumber(a.mist, b.mist, t)};
 }
 // Continuous sky for a local hour, anchored to sunrise and sunset.
 export function skyAt(hour, sunrise, sunset) {
@@ -68,6 +70,17 @@ export function skyAt(hour, sunrise, sunset) {
     if (hour >= h0 && hour <= h1) { const t = (hour - h0) / (h1 - h0); return {...mixTime(TIMES[a], TIMES[b], t), name: t < .5 ? a : b}; }
   }
   return {...mixTime(TIMES.day, TIMES.day, 0), name: 'day'};
+}
+
+// Share of households still awake at a given local hour (1 = evening peak).
+export function awakeAt(hour) {
+  const h = (hour + 24) % 24, ramp = (from, to, a, b) => a + (b - a) * Math.min(1, Math.max(0, (h - from) / (to - from)));
+  if (h >= 17 && h < 23) return 1;
+  if (h >= 23) return ramp(23, 24, 1, .62);
+  if (h < 1.5) return ramp(0, 1.5, .62, .3);
+  if (h < 5) return .3;
+  if (h < 7.5) return ramp(5, 7.5, .3, .75);
+  return .75;
 }
 
 export function initAtmosphere({source, camera, viewport, requestDraw, toast, onActiveChange}) {
@@ -117,7 +130,7 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
 
   // --- resolve the scene ---
   let resolved = {time: 'day', weather: 'clear', season: 'summer'};
-  const look = {mul: [1,1,1], add: [0,0,0], night: 0, sun: 1, warm: 0, spring: 0, autumn: 0, bare: 0, cover: 0, rain: 0, snow: 0, cloud: 0, wet: 0, fog: 0, flash: 0};
+  const look = {mul: [1,1,1], add: [0,0,0], night: 0, lit: 0, lamp: 0, sun: 1, warm: 0, spring: 0, autumn: 0, bare: 0, cover: 0, rain: 0, snow: 0, cloud: 0, wet: 0, fog: 0, flash: 0};
   let goal = null, settled = false;
   function computeGoal() {
     const now = tashkentNow();
@@ -132,11 +145,18 @@ export function initAtmosphere({source, camera, viewport, requestDraw, toast, on
     if (seasonName === 'winter' && state.season === 'auto' && state.weather === 'auto' && live) seasonCover = live.snowDepth > .01 ? .9 : .2;
     resolved = {time: sky.name, weather: weatherName, season: seasonName};
     const overcast = weather.cloud;
+    // Rain washes lying snow away; it does not sit under a downpour.
+    const cover = Math.max(weather.rain ? seasonCover * .4 : seasonCover, weather.cover);
+    // Windows: evening and gloomy weather add up. In the small hours of a real
+    // night most of the city sleeps, while the street lamps stay on.
+    let lit = 1 - (1 - sky.lit) * (1 - weather.lit);
+    if (state.time === 'auto') lit *= mixNumber(1, awakeAt(now.hour), sky.night);
+    const lamp = 1 - (1 - sky.lamp) * (1 - weather.lit * .9);
     return {
-      mul: sky.mul, add: sky.add, night: sky.night,
+      mul: sky.mul, add: sky.add, night: sky.night, lit, lamp,
       sun: sky.sun * (1 - .85 * overcast), warm: sky.warm * (1 - .8 * overcast),
       spring: season.spring, autumn: season.autumn, bare: season.bare,
-      cover: Math.max(seasonCover, weather.cover),
+      cover,
       rain: weather.rain, snow: weather.snow, cloud: overcast, wet: weather.wet,
       fog: Math.min(.8, weather.fog + sky.mist), flash: 0,
     };

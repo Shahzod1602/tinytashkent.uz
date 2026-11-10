@@ -18,6 +18,8 @@ uniform float u_time;
 uniform vec3 u_mul;
 uniform vec3 u_add;
 uniform float u_night;   // 0 day .. 1 deep night
+uniform float u_lit;     // share of windows switched on (evening, overcast, rain...)
+uniform float u_lamp;    // street lighting
 uniform float u_sun;     // direct sun strength (glints, cloud shadows)
 uniform float u_warm;    // golden-hour glow
 uniform vec3 u_season;   // spring, autumn, bare (leafless) weights
@@ -56,7 +58,7 @@ void main(){
   float grass = veg-tree;
   float water = (1.-veg)*smoothstep(.12,.16, min(c.g,c.b)-c.r)*smoothstep(.62,.5,lum);
   float warm = (1.-veg)*smoothstep(.06,.12, c.r-c.b)*smoothstep(.66,.58,lum);
-  float dark = smoothstep(.27,.15, lum)*(1.-veg);
+  float dark = smoothstep(.30,.17, lum)*(1.-veg);
   float road = (1.-veg)*(1.-water)*smoothstep(.13,.07,sat)*smoothstep(.3,.36,lum)*smoothstep(.56,.48,lum);
   float built = (1.-veg)*(1.-water);
 
@@ -104,10 +106,11 @@ void main(){
   // --- weather on the ground ---
   float daylight = 1.-u_night;
   float shadow = smoothstep(.48,.72, fbm(world/1100.+vec2(u_time*.012,u_time*.004)));
-  c *= 1.-.20*shadow*u_sun*(1.-u_cloud);
+  c *= 1.-.14*shadow*u_sun*(1.-u_cloud);
   float l2 = dot(c, vec3(.299,.587,.114));
-  c = mix(c, vec3(l2), .30*u_cloud+.12*u_wet);
-  c *= 1.-.13*u_cloud-.14*u_wet;
+  c = mix(c, vec3(l2), .18*u_cloud+.07*u_wet);
+  c *= 1.-.08*u_cloud-.09*u_wet;
+  c = (c-.45)*(1.+.10*u_cloud)+.45;        // overcast stays crisp, not milky
   // wet streets: darker asphalt with a cool sheen and splash rings
   float sheen = vnoise(world/14.+vec2(0.,u_time*.25));
   c += road*u_wet*vec3(.10,.13,.17)*(.4+sheen)*(.5+.5*daylight);
@@ -122,23 +125,24 @@ void main(){
   // --- time of day grade ---
   c = c*u_mul+u_add;
 
-  // --- night lights ---
+  // --- lights: windows follow u_lit, street lamps u_lamp, so a grey rainy
+  // afternoon already has a few lit rooms and the evening glows before dark ---
   float n = u_night;
-  if(n>.001){
+  if(u_lit>.001 || u_lamp>.001){
     float zl = max(1., exp2(floor(log2(1.4/max(u_cam.z,.02)))));
     vec2 cell = vec2(3.4,2.6)*zl;
     vec2 id = floor(world/cell);
     float h = hash(id+3.);
-    float lit = step(.52,h);
+    float lit = step(1.-.48*u_lit, h);
     float flick = .82+.18*sin(u_time*(.6+3.*h)+h*40.);
     vec3 lamp = mix(vec3(1.,.72,.36), vec3(.82,.90,1.), step(.9,hash(id+11.)));
-    float win = max(dark, warm*.55*step(.7,h));
+    float win = max(dark, warm*.55*step(.7,h)*n);
     // zoomed out, single windows vanish: sprinkle lights over whole blocks instead
-    win = max(win, step(1.5,zl)*built*(1.-road)*.62*step(.80,h));
-    c += lamp*lit*win*n*flick*(zl>1.5?.75:1.05);
-    // sodium glow of the street network
+    win = max(win, step(1.5,zl)*built*(1.-road)*.62*step(1.-.20*u_lit,h)*(.35+.65*n));
+    c += lamp*lit*win*flick*mix(.88,1.05,n)*(zl>1.5?.75:1.);
+    // sodium glow of the street network, mirrored by wet asphalt
     float lampSpot = smoothstep(.62,.92, vnoise(world/6.5));
-    c += road*n*vec3(.40,.29,.14)*(.17+.34*lampSpot);
+    c += road*u_lamp*vec3(.40,.29,.14)*(.17+.34*lampSpot)*(1.+.9*u_wet);
     // floodlit pale landmarks keep their face
     c += src*n*.55*smoothstep(.60,.74,lum)*built;
     // moonlit water
@@ -194,11 +198,11 @@ void main(){
   c += u_flash*vec3(.55,.6,.72);
   // soft frame
   float vig = smoothstep(.95,.35, length((q-.5)*vec2(1.,.9)));
-  c *= mix(1., .80+.20*vig, .45+.55*n);
+  c *= mix(1., .80+.20*vig, .15+.85*n);
   gl_FragColor = vec4(clamp(c,0.,1.),1.);
 }`;
 
-const UNIFORMS = ['u_tex','u_res','u_cam','u_time','u_mul','u_add','u_night','u_sun','u_warm','u_season','u_cover','u_rain','u_snow','u_cloud','u_wet','u_fog','u_flash'];
+const UNIFORMS = ['u_tex','u_res','u_cam','u_time','u_mul','u_add','u_night','u_lit','u_lamp','u_sun','u_warm','u_season','u_cover','u_rain','u_snow','u_cloud','u_wet','u_fog','u_flash'];
 
 function compile(gl, type, source) {
   const shader = gl.createShader(type);
@@ -232,8 +236,8 @@ export function createFx(source, target) {
     gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
     texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -264,6 +268,8 @@ export function createFx(source, target) {
       gl.uniform3fv(locations.u_mul, look.mul);
       gl.uniform3fv(locations.u_add, look.add);
       gl.uniform1f(locations.u_night, look.night);
+      gl.uniform1f(locations.u_lit, look.lit);
+      gl.uniform1f(locations.u_lamp, look.lamp);
       gl.uniform1f(locations.u_sun, look.sun);
       gl.uniform1f(locations.u_warm, look.warm);
       gl.uniform3f(locations.u_season, look.spring, look.autumn, look.bare);
